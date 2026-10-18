@@ -14,6 +14,7 @@ language's chain, keeping the gender of the voice where we can.
 from __future__ import annotations
 
 import base64
+import contextvars
 import itertools
 import re
 import logging
@@ -31,6 +32,10 @@ from .base import ProviderError, ProviderUnavailable, client, raise_for
 
 log = logging.getLogger("missyou.tts")
 _rr = itertools.count()
+# Per-request timeout for Sarvam: short in a live call so a stuck request falls back fast instead of
+# leaving the caller in silence.
+_sarvam_timeout: contextvars.ContextVar[float] = contextvars.ContextVar("sarvam_tts_timeout", default=60.0)
+CALL_TIMEOUT_S = 6.0
 LANG = {"bn": "bn-IN", "hi": "hi-IN", "en": "en-IN"}
 
 
@@ -91,7 +96,7 @@ def _sarvam_keys() -> list[str]:
 async def _sarvam_post(path: str, **kw: Any) -> dict[str, Any]:
     last: Exception | None = None
     for key in _sarvam_keys():
-        async with client(60) as c:
+        async with client(_sarvam_timeout.get()) as c:
             r = await c.post(f"{settings.sarvam_base}{path}", headers={"api-subscription-key": key}, **kw)
         if r.status_code in (401, 403, 429) or r.status_code >= 500:
             last = ProviderError("sarvam", "key_failed", f"HTTP {r.status_code}", r.status_code)
@@ -220,6 +225,15 @@ async def synthesize(text: str, language: str, voice: Voice, *, user_id: uuid.UU
             if voice.engine != own and own in chain:
                 chain.remove(own)
     errors: list[str] = []
+    token = _sarvam_timeout.set(CALL_TIMEOUT_S if feature == "call" else 60.0)
+    try:
+        return await _first_working(chain, text, lang, voice, user_id, call_id, feature, errors)
+    finally:
+        _sarvam_timeout.reset(token)
+
+
+async def _first_working(chain: list[str], text: str, lang: str, voice: Voice, user_id: uuid.UUID | None,
+                         call_id: uuid.UUID | None, feature: str, errors: list[str]) -> TtsResult:
     for engine in chain:
         if not engine_available(engine) or not engine_supports(engine, lang):
             continue
@@ -238,6 +252,6 @@ async def synthesize(text: str, language: str, voice: Voice, *, user_id: uuid.UU
         except BudgetExceeded:
             raise
         except Exception as e:  # noqa: BLE001
-            log.warning("TTS %s failed: %s", engine, str(e)[:160])
+            log.warning("TTS %s failed: %s", engine, (str(e) or type(e).__name__)[:160])
             errors.append(f"{engine}: {str(e)[:80]}")
     raise ProviderUnavailable("tts", "all_failed", "; ".join(errors) or "no engine for this language")

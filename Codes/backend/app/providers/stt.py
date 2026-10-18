@@ -2,6 +2,7 @@
 ~1.4 s) → OpenAI gpt-4o-mini-transcribe → local Whisper (CPU, slower)."""
 from __future__ import annotations
 
+import asyncio
 import itertools
 import logging
 import uuid
@@ -15,6 +16,8 @@ from .base import ProviderError, ProviderUnavailable, client, raise_for
 log = logging.getLogger("missyou.stt")
 _rr = itertools.count()
 SARVAM_MAX_S = 29.5
+HEDGE_BASE_S = 2.8      # Sarvam usually answers in ~2 s for a short turn
+HEDGE_PER_AUDIO_S = 0.1
 
 
 @dataclass
@@ -82,21 +85,40 @@ async def transcribe(wav: Path, *, duration_s: float, language: str | None = Non
         chain.sort(key=lambda p: 0 if p[0] == pinned else 1)
     if not chain:
         raise ProviderUnavailable("stt", "none", "no STT provider configured")
-    errors = []
-    for name, model in chain:
-        try:
-            async with metered(provider=name, capability="stt", model=model, est_usd=0.001, user_id=user_id,
-                               call_id=call_id, feature=feature, unit_type="minutes",
-                               units=duration_s / 60) as m:
-                if name == "voice_engine":
-                    res = SttResult(await voice_engine.transcribe(wav.read_bytes()), (language or "en")[:2], "voice_engine")
-                else:
-                    res = await (_sarvam(wav, language) if name == "sarvam" else _openai(wav, language))
-                m.units = duration_s / 60
-            return res
-        except BudgetExceeded:
-            raise
-        except Exception as e:  # noqa: BLE001
-            log.warning("STT %s failed: %s", name, str(e)[:160])
-            errors.append(f"{name}: {str(e)[:80]}")
+    errors: list[str] = []
+
+    async def attempt(name: str, model: str) -> SttResult:
+        async with metered(provider=name, capability="stt", model=model, est_usd=0.001, user_id=user_id,
+                           call_id=call_id, feature=feature, unit_type="minutes", units=duration_s / 60) as m:
+            if name == "voice_engine":
+                res = SttResult(await voice_engine.transcribe(wav.read_bytes()), (language or "en")[:2], "voice_engine")
+            else:
+                res = await (_sarvam(wav, language) if name == "sarvam" else _openai(wav, language))
+            m.units = duration_s / 60
+        return res
+
+    # In a live call, don't sit in silence waiting on a slow provider: after a short wait, start the next one
+    # alongside and take whichever answers first.
+    hedge_s = HEDGE_BASE_S + HEDGE_PER_AUDIO_S * duration_s if feature == "call" else None
+    pending: dict[asyncio.Task[SttResult], str] = {}
+    queue = list(chain)
+    try:
+        while queue or pending:
+            if queue and (not pending or (hedge_s is not None and len(pending) < 2)):
+                name, model = queue.pop(0)
+                pending[asyncio.create_task(attempt(name, model))] = name
+            wait = hedge_s if (hedge_s is not None and queue and len(pending) < 2) else None
+            done, _ = await asyncio.wait(pending, timeout=wait, return_when=asyncio.FIRST_COMPLETED)
+            for t in done:
+                name = pending.pop(t)
+                e = t.exception()
+                if e is None:
+                    return t.result()
+                if isinstance(e, BudgetExceeded):
+                    raise e
+                log.warning("STT %s failed: %s", name, (str(e) or type(e).__name__)[:160])
+                errors.append(f"{name}: {(str(e) or type(e).__name__)[:80]}")
+    finally:
+        for t in pending:
+            t.cancel()
     raise ProviderUnavailable("stt", "all_failed", "; ".join(errors))

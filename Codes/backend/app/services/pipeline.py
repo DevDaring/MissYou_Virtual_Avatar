@@ -413,6 +413,7 @@ async def generate_scene(job_id: str) -> None:
             still_path = work / "still.jpg"
             best: tuple[float, bytes] | None = None
             mode = "video"
+            budget_hit = False
             # --- Step 1: still, identity-checked, ≤ 2 retries -------------
             if xai_media.available():
                 for attempt in range(3):
@@ -423,7 +424,8 @@ async def generate_scene(job_id: str) -> None:
                         img = await xai_media.image(prompt_text, refs + ([place] if place else []), user_id=owner,
                                                     idempotency_key=f"scene:{sid}:{scene.generations}:still:{attempt}")
                     except BudgetExceeded:
-                        notes.append("Budget limit reached — used an animated photo instead.")
+                        budget_hit = True
+                        notes.append("Today's scene budget is used up, so we used their own photo, gently animated.")
                         break
                     except Exception as e:  # noqa: BLE001
                         log.warning("scene still attempt %d failed: %s", attempt, str(e)[:160])
@@ -443,6 +445,8 @@ async def generate_scene(job_id: str) -> None:
             else:
                 if best:
                     notes.append("The generated picture didn't look enough like them, so we used their own photo.")
+                elif budget_hit:
+                    pass
                 elif xai_media.available():
                     notes.append("Scene generation was unavailable — we used their own photo, gently animated.")
                 else:
@@ -489,6 +493,10 @@ async def generate_scene(job_id: str) -> None:
                                      duration_s=await av.duration(path), meta={"mode": kind})
                 setattr(scene, f"{variant}_media_id", a.id)
             scene.mode = "video" if all(k == "video" for _, _, k in results) else "animated_still"
+            # No AI scene was made (their own photo, gently animated): give the credits back.
+            if mode == "animated_still" and await refund(db, job.user_id, "scene_generation",
+                                                         f"scene:{sid}:{scene.generations}"):
+                notes.append("Your credits were returned.")
             scene.status, scene.progress, scene.notes = "ready", 100, notes
             scene.generations += 1
             await db.commit()

@@ -36,7 +36,7 @@ function readPrefs(u: User | null): Prefs {
     store_transcripts: !!p.store_transcripts,
     daily_minutes_limit: Math.min(MAX_DAILY, Math.max(5, num(p.daily_minutes_limit, MAX_DAILY))),
     call_soft_limit_min: Math.min(30, Math.max(1, num(p.call_soft_limit_min, 15))),
-    captions: p.captions ?? true,
+    captions: p.captions ?? false,
     ambient: p.ambient ?? true,
     audio_first: p.audio_first ?? true,
     subtitle_lang: (p.subtitle_lang as Prefs['subtitle_lang']) || '',
@@ -173,7 +173,7 @@ function PrefsSection({ user }: { user: User }) {
     <Section title="Calls" subtitle="How calls feel, and how long they last.">
       <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
         <Toggle id="pref-transcripts" label="Keep the words from calls" hint="So you can read them back later. Off by default." checked={p.store_transcripts} onChange={(v) => set('store_transcripts', v)} />
-        <Toggle id="pref-captions" label="Captions" hint="Show what's said on screen." checked={p.captions} onChange={(v) => set('captions', v)} />
+        <Toggle id="pref-captions" label="Captions" hint="Show what's said on screen during calls. Off by default; tap CC in a call to show or hide them." checked={p.captions} onChange={(v) => set('captions', v)} />
         <div className="py-2">
           <label htmlFor="pref-sub" className="label">Captions in a second language</label>
           <select id="pref-sub" className="input" value={p.subtitle_lang} onChange={(e) => set('subtitle_lang', e.target.value as Prefs['subtitle_lang'])}>

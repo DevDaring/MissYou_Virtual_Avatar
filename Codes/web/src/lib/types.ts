@@ -7,10 +7,11 @@ export interface Persona {
   speech_style?: string; phrases?: string[] | string; nicknames?: string[] | string; greeting?: string; goodbye?: string
   humour?: string; topics_loved?: string[] | string; topics_avoid?: string[] | string; languages?: string[] | string
   code_mix?: string; heaven_framing?: boolean; use_transcripts?: boolean; outfit_style?: string
+  address_form?: '' | 'intimate' | 'familiar' | 'formal'
   callers?: Caller[]
 }
 /** A family member who calls this loved one from the same account. */
-export interface Caller { id: string; name: string; relation: string; nickname: string; calls_them: string; notes?: string }
+export interface Caller { id: string; name: string; relation: string; nickname: string; calls_them: string; notes?: string; address_form?: '' | 'intimate' | 'familiar' | 'formal' }
 export interface Person {
   id: string; name: string; called_name: string; relationship: string; age: number | null; gender: string
   life_status: 'passed' | 'far'; call_language: 'en' | 'bn' | 'hi'; persona: Persona; status: string; setup_step: string

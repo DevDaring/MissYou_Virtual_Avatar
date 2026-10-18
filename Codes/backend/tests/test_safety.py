@@ -102,3 +102,10 @@ def test_never_push_to_call_again():
     assert violates_rules("দিনে একবার করে অন্তত ফোন করবি")
     assert violates_rules("Call me again tomorrow, okay?")
     assert not violates_rules("ভালো থাকিস, সময়মতো খেয়ে নিস।")
+
+
+def test_long_first_sentence_is_voiced_in_two_parts():
+    text = "আমায় এভাবেই কাছে পাস, বর্ডা—তোর কথা শুনলেই মনটা নরম হয়ে যায়। আজ কী করেছিস?"
+    parts = split_sentences(text)
+    assert parts[0] == "আমায় এভাবেই কাছে পাস,"
+    assert "".join(parts).replace(" ", "") == text.replace(" ", "")

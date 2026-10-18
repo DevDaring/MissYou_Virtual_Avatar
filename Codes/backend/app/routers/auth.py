@@ -78,7 +78,7 @@ async def signup(body: SignupIn, request: Request, response: Response, db: DB) -
                 password_hash=hash_password(body.password) if body.password else None, dob=body.dob,
                 language=body.language if body.language in ("en", "bn", "hi") else "en",
                 prefs={"store_transcripts": False, "daily_minutes_limit": settings.daily_minutes_default,
-                       "call_soft_limit_min": settings.call_soft_limit_min, "captions": True, "ambient": True,
+                       "call_soft_limit_min": settings.call_soft_limit_min, "captions": False, "ambient": True,
                        "audio_first": True})
     db.add(user)
     await db.flush()
@@ -166,7 +166,7 @@ async def otp_verify(body: OtpVerifyIn, request: Request, response: Response, db
                     email_verified=True, prefs={"store_transcripts": False,
                                                 "daily_minutes_limit": settings.daily_minutes_default,
                                                 "call_soft_limit_min": settings.call_soft_limit_min,
-                                                "captions": True, "ambient": True, "audio_first": True})
+                                                "captions": False, "ambient": True, "audio_first": True})
         db.add(user)
         await db.flush()
         await grant_trial(db, user)

@@ -62,7 +62,7 @@ async def ensure_demo() -> User:
                      password_hash=hash_password(settings.demo_password), dob=date(1990, 1, 1), role="admin",
                      is_demo=True, email_verified=True, trial_granted=True,
                      prefs={"store_transcripts": True, "daily_minutes_limit": 30, "call_soft_limit_min": 10,
-                            "captions": True, "ambient": True, "audio_first": True, "onboarded": True})
+                            "captions": False, "ambient": True, "audio_first": True, "onboarded": True})
             db.add(u)
             await db.flush()
             await adjust(db, u.id, 3000, "demo_grant")

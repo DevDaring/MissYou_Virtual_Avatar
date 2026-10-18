@@ -13,7 +13,40 @@ from .prompts import render
 LANG_NAME = {"en": "English", "bn": "Bengali (বাংলা)", "hi": "Hindi (हिन्दी)"}
 
 PERSONA_FIELDS = ["speech_style", "phrases", "nicknames", "greeting", "goodbye", "humour", "topics_loved",
-                  "topics_avoid", "languages", "code_mix", "heaven_framing", "use_transcripts", "outfit_style"]
+                  "topics_avoid", "languages", "code_mix", "heaven_framing", "use_transcripts", "outfit_style",
+                  "address_form"]
+
+# How they addressed the caller: Indian languages have three levels of "you" whose verb endings differ,
+# and mixing them in one conversation sounds wrong to a native speaker.
+ADDRESS_FORMS = {
+    "intimate": {"label": "intimate", "bn": "তুই", "bn_eg": "তুই কেমন আছিস? খেয়েছিস? বল তো",
+                 "hi": "तू", "hi_eg": "तू ठीक है? खाना खा लिया? बता ना",
+                 "others": "Marathi तू, Gujarati તું, Odia ତୁ, Assamese তই, Punjabi ਤੂੰ, Nepali तँ, Urdu تُو"},
+    "familiar": {"label": "familiar", "bn": "তুমি", "bn_eg": "তুমি কেমন আছো? খেয়েছো? বলো তো",
+                 "hi": "तुम", "hi_eg": "तुम ठीक हो? खाना खा लिया? बताओ ना",
+                 "others": "Marathi तुम्ही (familiar), Gujarati તમે, Odia ତୁମେ, Assamese তুমি, Punjabi ਤੁਸੀਂ, "
+                           "Nepali तिमी, Urdu تم"},
+    "formal": {"label": "respectful", "bn": "আপনি", "bn_eg": "আপনি কেমন আছেন? খেয়েছেন? বলুন তো",
+               "hi": "आप", "hi_eg": "आप ठीक हैं? खाना खा लिया? बताइए ना",
+               "others": "Marathi आपण, Gujarati આપ, Odia ଆପଣ, Assamese আপুনি, Punjabi ਆਪ, Nepali तपाईं, Urdu آپ"},
+}
+
+
+def address_line(form: str | None, who: str) -> str:
+    f = ADDRESS_FORMS.get(form or "")
+    if not f:
+        return (f"- **Addressing {who}: choose ONE form of \"you\" and keep it for the whole call** — Bengali তুই / "
+                f"তুমি / আপনি, Hindi तू / तुम / आप, and the matching level in any other Indian language. Pick it from "
+                f"their greeting and the relationship: elders say তুই or তুমি to their children (never আপনি); a "
+                f"child speaks to a parent or elder with তুমি (or আপনি), never তুই. "
+                f"Every pronoun and every verb ending must match that form; never mix forms within a call.")
+    rest = [k for k in ADDRESS_FORMS if k != form]
+    avoid = ", ".join(f"{ADDRESS_FORMS[k]['bn']} / {ADDRESS_FORMS[k]['hi']}" for k in rest)
+    return (f"- **Addressing {who}: always use the {f['label']} form of \"you\"** — Bengali **{f['bn']}** "
+            f"(\"{f['bn_eg']}\"), Hindi **{f['hi']}** (\"{f['hi_eg']}\"), and the same level in any other Indian "
+            f"language ({f['others']}). Use it in every pronoun and every verb ending — greetings, questions, "
+            f"blessings and goodbyes — for the whole call. **Never mix in the other forms** ({avoid}). If an example "
+            f"below uses another form, convert it to {f['bn']} / {f['hi']}.")
 
 
 def _join(v: Any) -> str:
@@ -50,7 +83,7 @@ async def style_examples(db: AsyncSession, person: Person, n: int = 4) -> list[s
 
 CULTURE_BLOCK = """## Family etiquette (a Bengali / Indian home)
 - Family never thanks each other formally. **Never say "ধন্যবাদ", "Thank you", "Thanks" (or "धन्यवाद", "शुक्रिया")** — that is for outsiders. Show it with affection, pride or a blessing instead: "বাহ্, খুব ভালো করেছিস", "বেঁচে থাক", "ভালো থাকিস", "আশীর্বাদ করি", "সোনা আমার".
-- No formal "sorry" or "please" between family either ("থাক, ঠিক আছে", "শোন না", "একটু কর তো"). Never use আপনি / आप for your own children or younger family.
+- No formal "sorry" or "please" between family either ("থাক, ঠিক আছে", "শোন না", "একটু কর তো"). Never use আপনি / आप for your own children or younger family unless the addressing rule in "How to speak" says so.
 - Elders bless rather than thank, show love through care (food, rest, health, "সাবধানে থাকিস") more than through words like "I love you", and keep warm, everyday Kolkata-home phrasing."""
 
 _CULTURE_LANGS = ("bengali", "bangla", "বাংলা", "hindi", "हिन्दी")
@@ -106,10 +139,12 @@ async def system_prompt(db: AsyncSession, person: Person, user: User, *, query: 
     who = caller_name(user, caller)
     nicks, called, rel, greeting = _join(p.get("nicknames")), person.called_name or person.name, \
         person.relationship or "loved one", _join(p.get("greeting"))
+    form = str(p.get("address_form") or "")
     if caller:
         nicks = str(caller.get("nickname") or "") or who
         called = str(caller.get("calls_them") or "") or called
         rel = str(caller.get("relation") or "") or "family member"
+        form = str(caller.get("address_form") or "")
         greeting = (f"their usual greeting for {user.display_name} was \"{greeting}\" — adapt it warmly for {who}"
                     if greeting else "")
         mode_block = (f"## Who is calling today\nToday you are talking with **{who}**, not with "
@@ -136,7 +171,7 @@ async def system_prompt(db: AsyncSession, person: Person, user: User, *, query: 
         topics_avoid=_join(p.get("topics_avoid")) or "none listed",
         memories="\n".join(f"- {m}" for m in mems) or "- (none shared yet — invite them to share)",
         style_examples="\n".join(f'- "{s}"' for s in styles) or "- (none)",
-        framing_rule=framing, mode_block=mode_block,
+        framing_rule=framing, mode_block=mode_block, address_line=address_line(form, who),
         culture_block=CULTURE_BLOCK if needs_culture(person, lang) else "",
     )
 

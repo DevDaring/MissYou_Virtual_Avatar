@@ -25,9 +25,18 @@ export default defineConfig({
         ],
       },
       workbox: {
-        navigateFallbackDenylist: [/^\/api\//],
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // HTML is network-first (fresh after every deploy, cached copy only when offline); hashed assets are precached.
+        navigateFallback: null,
+        globPatterns: ['**/*.{js,css,svg,png,woff2}'],
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
+          {
+            urlPattern: ({ request, url }) => request.mode === 'navigate' && !url.pathname.startsWith('/api/'),
+            handler: 'NetworkFirst',
+            options: { cacheName: 'pages', networkTimeoutSeconds: 4, expiration: { maxEntries: 20 } },
+          },
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/api/media/'),
             handler: 'CacheFirst',

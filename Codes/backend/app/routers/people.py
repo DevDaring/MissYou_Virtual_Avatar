@@ -32,6 +32,7 @@ from ..storage import storage
 
 router = APIRouter(prefix="/api", tags=["people"])
 log = logging.getLogger("missyou.people")
+LANG_NAMES = {"en": "English", "bn": "Bengali", "hi": "Hindi"}
 CONSENT_VERSION = "2026-10-15"
 MEDIA_CONSENT = [
     "I have the right to use these photos, videos and voice recordings.",
@@ -95,7 +96,7 @@ async def create_person(body: PersonIn, user: CurrentUser, db: DB) -> dict:
     count = (await db.execute(select(func.count()).select_from(Person).where(Person.owner_id == user.id))).scalar_one()
     if count >= 10:
         raise HTTPException(400, "You can keep up to 10 loved ones.")
-    p = Person(owner_id=user.id, **body.model_dump(), persona={"languages": [body.call_language]})
+    p = Person(owner_id=user.id, **body.model_dump(), persona={"languages": [LANG_NAMES.get(body.call_language, body.call_language)]})
     db.add(p)
     await db.commit()
     return {"person": person_out(p)}
@@ -153,9 +154,16 @@ def apply_persona_patch(p: Person, patch: dict[str, Any]) -> None:
         merged.update({k: v for k, v in persona.items() if k in (
             "speech_style", "phrases", "nicknames", "greeting", "goodbye", "humour", "topics_loved", "topics_avoid",
             "languages", "code_mix", "heaven_framing", "use_transcripts", "outfit_style", "places", "people")})
+        if "address_form" in persona:
+            merged["address_form"] = clean_address(persona.get("address_form"))
         if "callers" in persona:
             merged["callers"] = clean_callers(persona.get("callers"))
         p.persona = merged
+
+
+def clean_address(v: Any) -> str:
+    """intimate (তুই / तू) | familiar (তুমি / तुम) | formal (আপনি / आप) | "" (let it choose, consistently)."""
+    return v if v in ("intimate", "familiar", "formal") else ""
 
 
 def clean_callers(raw: Any) -> list[dict[str, str]]:
@@ -165,7 +173,7 @@ def clean_callers(raw: Any) -> list[dict[str, str]]:
         if not isinstance(c, dict) or not str(c.get("name") or "").strip():
             continue
         out.append({k: str(c.get(k) or "").strip()[:80] for k in ("name", "relation", "nickname", "calls_them")}
-                   | {"notes": str(c.get("notes") or "").strip()[:1000],
+                   | {"notes": str(c.get("notes") or "").strip()[:1000], "address_form": clean_address(c.get("address_form")),
                       "id": str(c.get("id") or uuid.uuid4().hex[:10])[:20]})
     return out
 

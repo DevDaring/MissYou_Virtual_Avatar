@@ -54,6 +54,10 @@ _FORBIDDEN = [re.compile(p, re.I) for p in (
 NEUTRAL_VOICE = {"en": ("sarvam", "priya"), "hi": ("sarvam", "priya"), "bn": ("sarvam", "roopa")}
 
 
+_CLAUSE = re.compile(r"(?<=[,;—–])\s*")
+FIRST_CHUNK_MAX = 40
+
+
 def split_sentences(text: str) -> list[str]:
     parts = [p.strip() for p in _SENT.split(text.strip()) if p.strip()]
     out: list[str] = []
@@ -62,7 +66,17 @@ def split_sentences(text: str) -> list[str]:
             out[-1] = out[-1] + " " + p
         else:
             out.append(p)
-    return out or [text.strip()]
+    out = out or [text.strip()]
+    # The first clip decides how soon they start speaking: voice a long first sentence in two parts,
+    # cut at its first comma or dash (shorter text comes back from the voice provider sooner).
+    first = out[0]
+    if len(first) > FIRST_CHUNK_MAX:
+        for m in _CLAUSE.finditer(first):
+            head, tail = first[:m.start()].strip(), first[m.end():].strip()
+            if 12 <= len(head) <= FIRST_CHUNK_MAX and len(tail) >= 8:
+                out[0:1] = [head, tail]
+                break
+    return out
 
 
 def clean_reply(text: str) -> str:

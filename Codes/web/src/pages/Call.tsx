@@ -21,7 +21,7 @@ export default function Call() {
   const [status, setStatus] = useState<Status>('loading')
   const [stage, setStage] = useState<Stage>('idle')
   const [lines, setLines] = useState<Line[]>([])
-  const [captions, setCaptions] = useState(prefs.captions !== false)
+  const [captions, setCaptions] = useState(prefs.captions === true)  // off by default so nothing covers their face
   const [ambientOn, setAmbientOn] = useState(prefs.ambient !== false)
   const [muted, setMuted] = useState(false)
   const [vad, setVad] = useState(false)
@@ -208,23 +208,25 @@ export default function Call() {
         <div className="flex flex-col items-end gap-2">
           {pip && <video ref={pipRef} autoPlay muted playsInline className="h-36 w-24 rounded-2xl object-cover ring-2 ring-white/30 [transform:scaleX(-1)]" aria-label="Your camera (stays on your device)" />}
           <button className="rounded-full bg-black/40 px-3 py-2 text-xs font-semibold backdrop-blur" onClick={() => setReport(true)} aria-label={t(lang, 'report')}>⚑ {t(lang, 'report')}</button>
+          <button className={`rounded-full px-3 py-1.5 text-xs font-bold tracking-wide backdrop-blur ring-1 ${captions ? 'bg-white/85 text-black ring-white' : 'bg-black/40 text-white/80 ring-white/30'}`}
+            onClick={() => setCaptions(!captions)} aria-pressed={captions} aria-label={t(lang, 'captions')} title={t(lang, 'captions')}>CC</button>
         </div>
       </header>
 
-      {/* Captions */}
-      <div className="absolute inset-x-0 bottom-[16.5rem] z-10 space-y-2 px-5" aria-live="polite">
-        {notice && <div className="mx-auto max-w-md rounded-2xl bg-black/55 px-4 py-2 text-center text-sm backdrop-blur">{notice}</div>}
-        {captions && lines.slice(-2).map((l) => (
-          <div key={l.id + l.role} className={`mx-auto max-w-lg rounded-2xl px-4 py-2 text-center text-lg leading-snug backdrop-blur ${l.role === 'assistant' ? 'bg-black/45 text-white' : 'bg-white/10 text-white/75 text-base'}`}>
-            {l.role === 'user' && <span className="mr-1 text-xs uppercase tracking-wide text-white/50">You</span>}{l.text}
-            {l.sub && <div className="mt-1 text-sm text-white/70">{l.sub}</div>}
-          </div>
-        ))}
-        {stageLabel && <div className="text-center text-sm text-white/70"><span className="inline-flex items-center gap-2">{stage !== 'recording' && <Spinner size={14} />}{stageLabel}</span></div>}
-      </div>
-
       {/* Controls */}
       <div className="absolute inset-x-0 bottom-0 z-10 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        {/* Captions: small, low (just above the talk button) and only the latest line, so the face stays clear */}
+        <div className="mb-2 space-y-1.5 px-5" aria-live="polite">
+          {notice && <div className="mx-auto max-w-md rounded-2xl bg-black/55 px-4 py-2 text-center text-sm backdrop-blur">{notice}</div>}
+          {captions && !showVol && lines.slice(-1).map((l) => (
+            <div key={l.id + l.role} className={`mx-auto max-w-sm rounded-xl px-3 py-1.5 text-center text-xs leading-snug backdrop-blur ${l.role === 'assistant' ? 'bg-black/50 text-white/90' : 'bg-black/30 text-white/70'}`}>
+              <p className="line-clamp-2">{l.role === 'user' && <span className="mr-1 text-[10px] uppercase tracking-wide text-white/50">You</span>}{l.text}</p>
+              {l.sub && <p className="mt-0.5 line-clamp-2 text-[11px] text-white/60">{l.sub}</p>}
+            </div>
+          ))}
+          {stageLabel && <div className="text-center text-sm text-white/70"><span className="inline-flex items-center gap-2">{stage !== 'recording' && <Spinner size={14} />}{stageLabel}</span></div>}
+        </div>
+
         {micError && <div className="mx-4 mb-2"><Notice tone="warn">{micError}</Notice></div>}
         {typing ? (
           <form className="mx-4 mb-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); sendText() }}>

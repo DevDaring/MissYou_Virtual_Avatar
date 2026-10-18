@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
@@ -27,6 +27,9 @@ describe('call screen', () => {
     const ws = sockets[sockets.length - 1]
     ws.onmessage?.({ data: JSON.stringify({ type: 'state', status: 'active', soft_limit_s: 600 }) })
     ws.onmessage?.({ data: JSON.stringify({ type: 'reply_text', turn_id: 't1', text: 'Ki re Shona, kemon achish?' }) })
+    // captions start hidden; CC shows them
+    expect(screen.queryByText('Ki re Shona, kemon achish?')).not.toBeInTheDocument()
+    fireEvent.click(await screen.findByRole('button', { name: 'Captions' }))
     expect(await screen.findByText('Ki re Shona, kemon achish?')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'End call' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Hold to talk' })).toBeInTheDocument()

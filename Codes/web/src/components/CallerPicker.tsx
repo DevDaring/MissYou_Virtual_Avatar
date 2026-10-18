@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Modal, Notice, Spinner } from './ui'
 import { errorText, patch } from '../lib/api'
 import type { Caller, Person } from '../lib/types'
+import AddressPicker from './AddressPicker'
 import { useAuth } from '../store/auth'
 
 /** "Who's calling?" — the account owner or a saved family member (e.g. a wife calling her mother-in-law). */
@@ -13,7 +14,7 @@ export default function CallerPicker({ person, open, onClose, onPick, onPersonCh
   const name = person.called_name || person.name
   const callers = person.persona?.callers || []
   const [adding, setAdding] = useState(callers.length === 0)
-  const empty = { name: '', relation: '', nickname: '', calls_them: '', notes: '' }
+  const empty: Omit<Caller, 'id'> = { name: '', relation: '', nickname: '', calls_them: '', notes: '', address_form: '' }
   const [f, setF] = useState(empty)
   const [editing, setEditing] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -48,7 +49,7 @@ export default function CallerPicker({ person, open, onClose, onPick, onPersonCh
               <span aria-hidden="true">📞</span>
             </button>
             <button className="h-12 w-12 shrink-0 rounded-full text-cream-200/60 hover:bg-white/10" aria-label={`Edit ${c.name}`}
-              onClick={() => { setF({ name: c.name, relation: c.relation, nickname: c.nickname, calls_them: c.calls_them, notes: c.notes || '' }); setEditing(c.id); setAdding(true) }}>✎</button>
+              onClick={() => { setF({ name: c.name, relation: c.relation, nickname: c.nickname, calls_them: c.calls_them, notes: c.notes || '', address_form: c.address_form || '' }); setEditing(c.id); setAdding(true) }}>✎</button>
             <button className="h-12 w-12 shrink-0 rounded-full text-cream-200/60 hover:bg-white/10" aria-label={`Remove ${c.name}`} disabled={saving}
               onClick={() => void save(callers.filter((x) => x.id !== c.id))}>✕</button>
           </div>
@@ -60,6 +61,8 @@ export default function CallerPicker({ person, open, onClose, onPick, onPersonCh
             <div><label className="label" htmlFor="cp-name">Their name</label><input id="cp-name" className="input" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="e.g. Priya" required /></div>
             <div><label className="label" htmlFor="cp-rel">{name} is their…</label><input id="cp-rel" className="input" value={f.relation} onChange={(e) => setF({ ...f, relation: e.target.value })} placeholder="sister, mother-in-law, grandmother, best friend…" required /></div>
             <div><label className="label" htmlFor="cp-nick">What {name} called them</label><input id="cp-nick" className="input" value={f.nickname} onChange={(e) => setF({ ...f, nickname: e.target.value })} placeholder="বোনটি, বৌমা, Chhoto, Priya…" /></div>
+            <div><div className="label">How {name} addressed {f.name || 'them'}</div>
+              <AddressPicker value={f.address_form || ''} onChange={(v) => setF({ ...f, address_form: v })} lang={person.call_language} who={f.name || 'them'} /></div>
             <div><label className="label" htmlFor="cp-calls">What they call {name} (optional)</label><input id="cp-calls" className="input" value={f.calls_them} onChange={(e) => setF({ ...f, calls_them: e.target.value })} placeholder="Didi, Ma, Thamma…" /></div>
             <div><label className="label" htmlFor="cp-notes">Things they shared or love to talk about (optional)</label>
               <textarea id="cp-notes" className="input min-h-[96px] py-3" value={f.notes} onChange={(e) => setF({ ...f, notes: e.target.value })}
