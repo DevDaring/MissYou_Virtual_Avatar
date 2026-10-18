@@ -217,9 +217,9 @@ class Settings:
         self.resend_key = g("RESEND_API_KEY", "")
         self.email_from = g("MISSYOU_EMAIL_FROM", "Miss You <hello@missyou.koushikdeb.com>")
         self.sentry_dsn = g("SENTRY_DSN", "")
-        self.voice_engine_url = g("VOICE_ENGINE_URL", g("VOICEBOX_URL", "http://127.0.0.1:17493")).rstrip("/")
-        self.voice_engine_default = g("VOICE_ENGINE_DEFAULT", g("VOICEBOX_ENGINE", "chatterbox"))
-        self.voice_engine_enabled = _b(e, "VOICE_ENGINE_ENABLED", _b(e, "VOICEBOX_ENABLED", True))
+        self.voice_engine_url = g("VOICE_ENGINE_URL", "http://127.0.0.1:17493").rstrip("/")
+        self.voice_engine_default = g("VOICE_ENGINE_DEFAULT", "chatterbox")
+        self.voice_engine_enabled = _b(e, "VOICE_ENGINE_ENABLED", True)
         self.gpu_worker_shared_secret = g("MISSYOU_GPU_WORKER_SECRET", "")
 
     @property

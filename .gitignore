@@ -8,8 +8,8 @@ Codes/storage/
 Codes/web/e2e-shots/
 # --- vendor ---
 Codes/vendor/*
-!Codes/vendor/voicebox_run.sh
-!Codes/vendor/voicebox_stop.sh
+!Codes/vendor/voice_engine_run.sh
+!Codes/vendor/voice_engine_stop.sh
 # --- build / env / caches ---
 node_modules/
 dist/

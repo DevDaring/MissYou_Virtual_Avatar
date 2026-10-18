@@ -9,6 +9,6 @@ ss -tln 2>/dev/null | grep -q ":$PORT " || ok=0
 for q in cpu gpu; do
   pid=$(cat "$APP_DIR/logs/worker_$q.pid" 2>/dev/null); [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || ok=0
 done
-[ "$ok" = 1 ] && { "$APP_DIR/voicebox.sh" ensure >> "$APP_DIR/logs/voice_engine.log" 2>&1; exit 0; }
+[ "$ok" = 1 ] && { "$APP_DIR/voice_engine.sh" ensure >> "$APP_DIR/logs/voice_engine.log" 2>&1; exit 0; }
 echo "$(date -Is) autostart: (re)starting missyou" >> "$APP_DIR/logs/autostart.log"
 "$APP_DIR/run.sh" >> "$APP_DIR/logs/autostart.log" 2>&1

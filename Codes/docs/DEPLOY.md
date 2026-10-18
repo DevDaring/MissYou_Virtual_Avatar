@@ -22,7 +22,7 @@ cd backend && .venv/bin/python -m app.seed --content                            
 5. `cd web && npm ci && npm run build`.
 6. DNS A record → VPS IP; add `deploy/host/Caddyfile.snippet` to your Caddyfile (change the `root` path); `sudo systemctl reload caddy`.
 7. Start with `deploy/host/run.sh` (copy the host scripts next to `backend/` and `web/`), add the cron lines from `scripts/deploy.sh`.
-8. Optional local voice engine: set up the voice engine in `vendor/`, create a venv with CPU torch, run its backend bound to 127.0.0.1 only (see `vendor/voicebox_run.sh`). Without it, voices fall back to Sarvam cloning/presets.
+8. Optional local voice engine: set up the voice engine in `vendor/`, create a venv with CPU torch, run its backend bound to 127.0.0.1 only (see `vendor/voice_engine_run.sh`). Without it, voices fall back to Sarvam cloning/presets.
 Alternatively `docker compose -f deploy/docker-compose.yml up` brings up Postgres+pgvector, Redis, API, workers and Caddy (see file; untested on this host).
 
 ## Remote GPU worker (for lip-sync / restoration / faster cloning)

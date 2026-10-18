@@ -45,7 +45,7 @@ async def delete_person(db: AsyncSession, person: Person, actor: uuid.UUID | Non
                               "could_not_delete": []}
     vps = (await db.execute(select(VoiceProfile).where(VoiceProfile.person_id == person.id))).scalars().all()
     for vp in vps:
-        if vp.provider in ("voice_engine", "voicebox") and vp.provider_voice_id:
+        if vp.provider == "voice_engine" and vp.provider_voice_id:
             ok = await voice_engine.delete_profile(vp.provider_voice_id)
             report["providers"].setdefault("voice_engine", []).append(
                 {"profile": vp.provider_voice_id, "deleted": ok})

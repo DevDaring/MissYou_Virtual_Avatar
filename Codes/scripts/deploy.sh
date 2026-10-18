@@ -15,7 +15,7 @@ rsync -a --delete "$SRC/web/dist/" "$DST/web/"
 rsync -a "$SRC/config/" "$DST/config/"
 rsync -a --delete "$SRC/prompts/" "$DST/prompts/"
 rsync -a "$SRC/docs/" "$DST/docs/"
-cp "$SRC/deploy/host/"{run.sh,stop.sh,autostart.sh,voicebox.sh,backup.sh} "$DST/"
+cp "$SRC/deploy/host/"{run.sh,stop.sh,autostart.sh,voice_engine.sh,backup.sh} "$DST/"
 chmod +x "$DST"/*.sh
 echo "==> environment"
 install -m 600 "$SRC/.env" "$DST/.env"   # provider keys (AWS/GCP names inside are ignored by the app)

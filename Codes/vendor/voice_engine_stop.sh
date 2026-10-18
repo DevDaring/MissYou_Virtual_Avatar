@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Stop the voice engine backend started by voicebox_run.sh.
+# Stop the voice engine backend started by voice_engine_run.sh.
 set -uo pipefail
 
 VENDOR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PIDFILE="$VENDOR/voicebox.pid"
+PIDFILE="$VENDOR/engine.pid"
 
 if [ ! -f "$PIDFILE" ]; then
   echo "No pid file ($PIDFILE); nothing to stop."

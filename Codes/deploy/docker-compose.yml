@@ -27,7 +27,7 @@ services:
     command: ["arq", "app.worker.WorkerSettings"]
     environment: { MISSYOU_QUEUE: gpu, MISSYOU_DATABASE_URL: "postgresql+asyncpg://missyou:${DB_PASSWORD:-missyou}@db:5432/missyou", MISSYOU_REDIS_URL: "redis://redis:6379/7", MISSYOU_STORAGE_DIR: /data, VOICE_ENGINE_URL: "http://voice-engine:17493" }
   voice-engine:
-    build: { context: ../vendor/voice_engine }   # local voice engine; internal network only
+    build: { context: ../vendor/engine }   # local voice engine; internal network only
     profiles: [voice]
     expose: ["17493"]
   web:

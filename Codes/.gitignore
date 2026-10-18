@@ -1,12 +1,9 @@
 .env
 missyou.env
 storage/
-vendor/voicebox/
-vendor/voicebox_data/
-vendor/hf_cache/
-vendor/cache/
-vendor/*.log
-vendor/*.pid
+vendor/*
+!vendor/voice_engine_run.sh
+!vendor/voice_engine_stop.sh
 backend/.venv/
 web/node_modules/
 web/dist/
