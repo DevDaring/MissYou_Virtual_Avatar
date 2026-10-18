@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start the Voicebox TTS/voice-clone backend headless on CPU, bound to 127.0.0.1:17493.
+# Start the local voice engine backend headless on CPU, bound to 127.0.0.1:17493.
 # Idempotent: if already healthy, does nothing. Logs to vendor/voicebox.log, pid in vendor/voicebox.pid.
 set -euo pipefail
 
@@ -16,12 +16,12 @@ URL="http://$HOST:$PORT"
 TIMEOUT="${VOICEBOX_START_TIMEOUT:-180}"
 
 if curl -fsS -m 3 "$URL/health" >/dev/null 2>&1; then
-  echo "Voicebox already healthy at $URL (pid $(cat "$PIDFILE" 2>/dev/null || echo '?'))"
+  echo "Voice engine already healthy at $URL (pid $(cat "$PIDFILE" 2>/dev/null || echo '?'))"
   exit 0
 fi
 
 if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-  echo "A Voicebox process (pid $(cat "$PIDFILE")) exists but is not healthy yet; waiting..."
+  echo "Voice engine process (pid $(cat "$PIDFILE")) exists but is not healthy yet; waiting..."
 else
   mkdir -p "$DATA_DIR" "$VENDOR/hf_cache" "$VENDOR/cache"
 
@@ -58,20 +58,20 @@ EOF
   fi
 
   cd "$VB"
-  echo "=== $(date -Is) starting voicebox on $URL ===" >>"$LOG"
+  echo "=== $(date -Is) starting voice engine on $URL ===" >>"$LOG"
   setsid "$PY" -m backend.main --host "$HOST" --port "$PORT" --data-dir "$DATA_DIR" \
     >>"$LOG" 2>&1 < /dev/null &
   echo $! >"$PIDFILE"
-  echo "Started Voicebox pid $(cat "$PIDFILE"); log: $LOG"
+  echo "Started voice engine pid $(cat "$PIDFILE"); log: $LOG"
 fi
 
 for ((i = 0; i < TIMEOUT; i++)); do
   if curl -fsS -m 3 "$URL/health" >/dev/null 2>&1; then
-    echo "Voicebox healthy at $URL after ${i}s"
+    echo "Voice engine healthy at $URL after ${i}s"
     exit 0
   fi
   if ! kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
-    echo "Voicebox process died; last log lines:" >&2
+    echo "Voice engine process died; last log lines:" >&2
     tail -n 40 "$LOG" >&2
     exit 1
   fi

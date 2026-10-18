@@ -1,4 +1,4 @@
-"""Data model. PostgreSQL is the single source of truth (Voicebox and hosted
+"""Data model. PostgreSQL is the single source of truth (voice engine and hosted
 providers only ever hold copies keyed by ids stored here)."""
 from __future__ import annotations
 
@@ -203,7 +203,7 @@ class VoiceProfile(Base):
     id: Mapped[uuid.UUID] = _id()
     person_id: Mapped[uuid.UUID] = _fk("persons.id")
     kind: Mapped[str] = mapped_column(String(20))  # clone | preset | designed
-    provider: Mapped[str] = mapped_column(String(30))  # voicebox | sarvam | openai | fish ...
+    provider: Mapped[str] = mapped_column(String(30))  # voice_engine | sarvam | openai | fish ...
     provider_voice_id: Mapped[str] = mapped_column(String(200), default="")
     engine: Mapped[str] = mapped_column(String(60), default="")
     language: Mapped[str] = mapped_column(String(8), default="en")

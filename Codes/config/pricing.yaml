@@ -36,7 +36,7 @@ providers:
     grok-imagine-video-1.5-lite: {seconds: 0.02}
     grok-imagine-video: {seconds: 0.05}
     xai: {chars: 0.000015}                            # TTS $15 / 1M chars
-  voicebox:
+  voice_engine:
     default: {chars: 0.0}                             # local, CPU
   fish:
     fish: {chars: 0.000015}                           # s2.1-pro $15 / 1M UTF-8 bytes (Latin ≈ 1 byte/char)

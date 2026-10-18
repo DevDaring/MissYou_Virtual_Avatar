@@ -1,16 +1,16 @@
 # Decisions (one line each: decision — reason)
 
-- PostgreSQL 16 + pgvector already on the host — owner asked for pgsql instead of SQLite; Voicebox keeps its own SQLite only as an internal cache keyed by our ids.
+- PostgreSQL 16 + pgvector already on the host — owner asked for pgsql instead of SQLite; the local voice engine keeps its own SQLite only as an internal cache keyed by our ids.
 - Native processes (venv + uvicorn + arq) behind the existing Caddy, not Docker, on this VPS — matches the other apps on the box and reuses the system Postgres/Redis; docker-compose files are provided for a fresh VPS (deploy/), not used here.
 - arq (asyncio, Redis) over Dramatiq — the API is async end-to-end; arq jobs are plain async functions sharing the same code; supports abort and per-queue workers.
 - Two queues, `missyou:cpu` and `missyou:gpu` — "gpu" jobs (scene generation, letters, restoration) can be served by a remote GPU worker pulling the same Redis over a TLS tunnel.
 - OpenAI gpt-4.1-mini is the effective primary LLM — LinkAPI (first in the brief's chain) failed the TLS handshake from this host on 2026-10-15; it stays first in the chain and is skipped automatically while its health check is down.
 - Safety = keywords ∥ OpenAI moderation ∥ LLM classifier — verified that moderation alone misses indirect phrasing ("I don't want to live without him" = 0.009).
 - Safety check runs in parallel with the persona LLM and the reply is discarded if unsafe — saves ~1.5 s per turn without ever speaking an unchecked reply.
-- STT: Sarvam saaras:v4 → OpenAI gpt-4o-mini-transcribe → Voicebox Whisper — Sarvam is fastest and best for Bengali/Hindi; utterances capped at 28 s to stay within Sarvam's 30 s sync limit.
-- Voice cloning: Voicebox LuxTTS for English (≈3 s/sentence on CPU), Sarvam /voices/clone for Bengali and Hindi — Voicebox has no Bengali; Chatterbox Hindi takes ≈27 s/sentence on this CPU, too slow for live turns.
+- STT: Sarvam saaras:v4 → OpenAI gpt-4o-mini-transcribe → local Whisper — Sarvam is fastest and best for Bengali/Hindi; utterances capped at 28 s to stay within Sarvam's 30 s sync limit.
+- Voice cloning: LuxTTS for English (≈3 s/sentence on CPU), Sarvam /voices/clone for Bengali and Hindi — local engine has no Bengali model; Chatterbox Hindi takes ≈27 s/sentence on this CPU, too slow for live turns.
 - Sarvam cloning uses `ref_audio` per request (no saved voice at Sarvam) — avoids the per-account voice cap and leaves nothing to delete at the provider.
-- Voicebox called through its queued /generate API, not /generate/stream — two of our processes call it and its inference is single-threaded.
+- Local voice engine called through its queued /generate API, not /generate/stream — two of our processes call it and its inference is single-threaded.
 - OmniVoice disabled — CC-BY-NC weights forbid commercial use; TADA not used (Llama licence conditions, no Hindi, too heavy for CPU).
 - Diarization = silence segmentation + MFCC/pitch speaker vectors + agglomerative clustering — no GPU on the VPS; the user confirms every clip anyway ("we never auto-match voice to face"); pyannote/Demucs are the GPU-worker upgrade.
 - Vocal isolation = ffmpeg band-pass + FFT denoise — Demucs on CPU is too slow for the setup flow; listed as GPU-worker capability.
@@ -33,7 +33,7 @@
 - Uvicorn runs 2 workers — call state is per-WebSocket plus Redis/DB, so workers are independent.
 - (2026-10-18) Bengali speech always goes to Sarvam (owner's instruction): Bengali-speaking personas are voiced with bulbul:v4-flash conversational Bengali voices (`roopa_bn_conversational` / `arnab_bn_conversation`, v3 fallback), or Sarvam cloning when a clone exists — verified that romanised Bengali read by an en-IN voice was mispronounced, while Bengali-script text round-trips word-perfect.
 - (2026-10-18) The persona prompt writes Bengali/Hindi in native script; TTS language follows the script of the whole reply, so one voice is kept per reply (no mid-sentence voice switching).
-- (2026-10-18) Fish Audio s2.1-pro is the first clone engine for English and Hindi (saved private voice, ~0.3–0.8 s per sentence); Voicebox and Sarvam clone remain fallbacks.
+- (2026-10-18) Fish Audio s2.1-pro is the first clone engine for English and Hindi (saved private voice, ~0.3–0.8 s per sentence); local engine and Sarvam clone remain fallbacks.
 - (2026-10-18) fal sync-lipsync v2 is used for async content only (letters, memory-box keepsakes): measured ~80 s for a 4 s reply, far over the live-call budget; live lip-sync stays off (`MISSYOU_LIPSYNC_LIVE=false`).
 - (2026-10-18) Letter replies shortened to 20–30 s so lip-synced letters stay affordable (~$1–1.5 each at $3/min).
 - (2026-10-18) Higgsfield (Wan 2.7 image-to-video with audio) registered as a talking-video fallback but not wired: ~$0.085/s and ~90 s per 3 s clip vs fal on our existing scene loops.

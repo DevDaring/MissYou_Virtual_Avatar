@@ -1,5 +1,5 @@
 # One `docker compose -f deploy/docker-compose.yml --env-file .env --env-file missyou.env up --build`
-# brings up the full stack. Voicebox runs as an internal-only service (no published port).
+# brings up the full stack. The voice engine runs as an internal-only service (no published port).
 # Note: the production host currently runs natively (see docs/DEPLOY.md); this file is for fresh VPS / local use.
 services:
   db:
@@ -15,19 +15,19 @@ services:
       MISSYOU_DATABASE_URL: postgresql+asyncpg://missyou:${DB_PASSWORD:-missyou}@db:5432/missyou
       MISSYOU_REDIS_URL: redis://redis:6379/7
       MISSYOU_STORAGE_DIR: /data
-      VOICEBOX_URL: http://voicebox:17493
+      VOICE_ENGINE_URL: http://voice-engine:17493
     volumes: [media:/data]
     depends_on: [db, redis]
   worker-cpu:
     <<: *api
     command: ["arq", "app.worker.WorkerSettings"]
-    environment: { MISSYOU_QUEUE: cpu, MISSYOU_DATABASE_URL: "postgresql+asyncpg://missyou:${DB_PASSWORD:-missyou}@db:5432/missyou", MISSYOU_REDIS_URL: "redis://redis:6379/7", MISSYOU_STORAGE_DIR: /data, VOICEBOX_URL: "http://voicebox:17493" }
+    environment: { MISSYOU_QUEUE: cpu, MISSYOU_DATABASE_URL: "postgresql+asyncpg://missyou:${DB_PASSWORD:-missyou}@db:5432/missyou", MISSYOU_REDIS_URL: "redis://redis:6379/7", MISSYOU_STORAGE_DIR: /data, VOICE_ENGINE_URL: "http://voice-engine:17493" }
   worker-gpu:
     <<: *api
     command: ["arq", "app.worker.WorkerSettings"]
-    environment: { MISSYOU_QUEUE: gpu, MISSYOU_DATABASE_URL: "postgresql+asyncpg://missyou:${DB_PASSWORD:-missyou}@db:5432/missyou", MISSYOU_REDIS_URL: "redis://redis:6379/7", MISSYOU_STORAGE_DIR: /data, VOICEBOX_URL: "http://voicebox:17493" }
-  voicebox:
-    build: { context: ../vendor/voicebox }   # upstream Dockerfile; internal network only
+    environment: { MISSYOU_QUEUE: gpu, MISSYOU_DATABASE_URL: "postgresql+asyncpg://missyou:${DB_PASSWORD:-missyou}@db:5432/missyou", MISSYOU_REDIS_URL: "redis://redis:6379/7", MISSYOU_STORAGE_DIR: /data, VOICE_ENGINE_URL: "http://voice-engine:17493" }
+  voice-engine:
+    build: { context: ../vendor/voice_engine }   # local voice engine; internal network only
     profiles: [voice]
     expose: ["17493"]
   web:

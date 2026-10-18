@@ -10,7 +10,7 @@ Codes/
       config.py       settings from .env + missyou.env; AWS/GCP ban
       models.py       data model (PostgreSQL 16 + pgvector)
       storage.py      AES-256-GCM chunked encryption at rest; signed URLs in security.py
-      providers/      llm, stt, tts, voicebox, xai_media, lipsync (stub), registry
+      providers/      llm, stt, tts, voice_engine, xai_media, lipsync (stub), registry
       services/       metering, credits, safety, persona, faces, ingest, av, pipeline, calls, privacy, flags, jobs
       routers/        auth, me (+extras), people, calls (+scenes, memory box), admin, public
       worker.py       arq WorkerSettings (MISSYOU_QUEUE=cpu|gpu)
@@ -22,12 +22,12 @@ Codes/
   prompts/            persona_v1, safety_classifier_v1, wrapup_v1, interview_v1, memory_extract_v1, letter_v1
   deploy/             host scripts, Caddy block, docker-compose (dev + prod)
   scripts/deploy.sh   one-command deploy to /home/Debz/Host/missyou
-  vendor/voicebox     jamiepine/voicebox (MIT), run headless on CPU, loopback only
+  vendor/             local voice engine, run headless on CPU, loopback only
   docs/               this folder
 ```
 
 ## Data model (PostgreSQL is the source of truth)
-users · otp_codes · consents (attestations with time + IP) · persons (loved ones; persona JSON) · media_assets (every file, encrypted; `ai_generated` flag) · upload_sessions (resumable chunked uploads) · face_detections (512-d ArcFace `vector`, quality, age, anchor flags) · face_clusters (centroid `vector`) · speaker_clips · voice_profiles (our id → Voicebox profile id / preset speaker) · memory_notes · scenes (cache key per person/place/activity/time/weather/outfit) · calls · call_turns (per-stage timings; text only when opted in) · memory_box · provider_usage (every paid call: units, USD, INR, latency, success, idempotency key) · jobs · safety_events (categories only, no content) · reports · credit_ledger · payments · feature_flags · admin_settings (provider pins, budget caps) · special_days · family_members · persona_edit_requests · letters · mood_checks · email_outbox · deletion_reports.
+users · otp_codes · consents (attestations with time + IP) · persons (loved ones; persona JSON) · media_assets (every file, encrypted; `ai_generated` flag) · upload_sessions (resumable chunked uploads) · face_detections (512-d ArcFace `vector`, quality, age, anchor flags) · face_clusters (centroid `vector`) · speaker_clips · voice_profiles (our id → engine profile id / preset speaker) · memory_notes · scenes (cache key per person/place/activity/time/weather/outfit) · calls · call_turns (per-stage timings; text only when opted in) · memory_box · provider_usage (every paid call: units, USD, INR, latency, success, idempotency key) · jobs · safety_events (categories only, no content) · reports · credit_ledger · payments · feature_flags · admin_settings (provider pins, budget caps) · special_days · family_members · persona_edit_requests · letters · mood_checks · email_outbox · deletion_reports.
 
 ## Call loop and latency budget
 ```
@@ -36,7 +36,7 @@ user stops speaking ─► upload utterance (WS) ─► ffmpeg → 16 kHz WAV
    ─► Safety: keywords ∥ OpenAI moderation ∥ LLM classifier (~1–2.5 s) ┐  run in parallel
    ─► Persona LLM gpt-4.1-mini (~1.2–1.8 s)                            ┘  (reply discarded if unsafe)
    ─► split sentences ─► TTS per sentence, 2 in flight
-        Sarvam clone ~3.9 s · Sarvam preset ~1.8–2.2 s · Voicebox LuxTTS ~3 s (en)
+        Sarvam clone ~3.9 s · Sarvam preset ~1.8–2.2 s · LuxTTS ~3 s (en)
    ─► first sentence audio to client  (target < 4 s; measured 3.8–3.9 s for typed turns on production,
                                         ≈ 5.3 s for spoken turns incl. STT — see below)
    ─► [lip-sync provider when configured]  (target < 10 s)

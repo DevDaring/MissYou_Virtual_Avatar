@@ -3,7 +3,7 @@
 ## This server (current production)
 - Live at **https://missyou.koushikdeb.com** (NameSilo A record `missyou` → 154.12.116.152; TLS by Caddy ACME).
 - Code is deployed to **/home/Debz/Host/missyou** by `scripts/deploy.sh` (idempotent: builds the PWA, syncs backend/config/prompts/docs, keeps secrets, runs migrations, restarts, installs the Caddy block into `/home/Debz/Host/saarthi/Caddyfile`, reloads Caddy, installs cron).
-- Processes (all loopback): API `uvicorn` ×2 on 127.0.0.1:8170, arq workers `cpu` and `gpu`, Voicebox on 127.0.0.1:17493 (from `Codes/vendor`, 8 GB venv + models, kept out of the host folder).
+- Processes (all loopback): API `uvicorn` ×2 on 127.0.0.1:8170, arq workers `cpu` and `gpu`, local voice engine on 127.0.0.1:17493 (from `vendor/`, models kept out of the host folder).
 - Data: PostgreSQL 16 database `missyou` (role `missyou`, pgvector), Redis db 7, encrypted media in `/home/Debz/Host/missyou/storage/objects`.
 - Cron: `@reboot` + `*/5` watchdog (`autostart.sh`), nightly `backup.sh` 03:50 UTC → `/home/Debz/Host/missyou-backups` (pg_dump + objects, 14 days).
 - Logs: `/home/Debz/Host/missyou/logs/*.log` (JSON lines), Caddy access log `/var/log/caddy/missyou.log` (rotated 50 MiB × 5).
@@ -22,7 +22,7 @@ cd backend && .venv/bin/python -m app.seed --content                            
 5. `cd web && npm ci && npm run build`.
 6. DNS A record → VPS IP; add `deploy/host/Caddyfile.snippet` to your Caddyfile (change the `root` path); `sudo systemctl reload caddy`.
 7. Start with `deploy/host/run.sh` (copy the host scripts next to `backend/` and `web/`), add the cron lines from `scripts/deploy.sh`.
-8. Optional Voicebox: `git clone https://github.com/jamiepine/voicebox vendor/voicebox`, create a venv with CPU torch, run its backend bound to 127.0.0.1 only (see `vendor/voicebox_run.sh`). Without it, voices fall back to Sarvam cloning/presets.
+8. Optional local voice engine: set up the voice engine in `vendor/`, create a venv with CPU torch, run its backend bound to 127.0.0.1 only (see `vendor/voicebox_run.sh`). Without it, voices fall back to Sarvam cloning/presets.
 Alternatively `docker compose -f deploy/docker-compose.yml up` brings up Postgres+pgvector, Redis, API, workers and Caddy (see file; untested on this host).
 
 ## Remote GPU worker (for lip-sync / restoration / faster cloning)

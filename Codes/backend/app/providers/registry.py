@@ -16,7 +16,7 @@ from typing import Any
 
 from ..config import Endpoint, settings
 from ..redis_client import redis
-from . import voicebox
+from . import voice_engine
 from .base import client
 
 log = logging.getLogger("missyou.registry")
@@ -24,8 +24,8 @@ log = logging.getLogger("missyou.registry")
 CAPABILITIES: dict[str, list[str]] = {
     "conversation": ["linkapi", "openai", "openai-4.1", "anthropic", "openrouter", "deepseek", "linkapi-gemini", "gemini"],
     "safety": ["keywords(local)", "openai-moderation", "linkapi", "openai", "anthropic", "openrouter", "gemini"],
-    "stt": ["sarvam", "openai", "voicebox-whisper", "deepgram"],
-    "tts_clone": ["fish", "voicebox", "sarvam_clone", "elevenlabs"],
+    "stt": ["sarvam", "openai", "voice-engine-whisper", "deepgram"],
+    "tts_clone": ["fish", "voice_engine", "sarvam_clone", "elevenlabs"],
     "tts_preset": ["sarvam", "openai", "xai"],
     "scene_image": ["xai", "fal"],
     "idle_video": ["xai", "fal", "local(animated-still)"],
@@ -57,7 +57,7 @@ def configured(name: str) -> bool:
     return {
         "openai-moderation": settings.openai.available,
         "sarvam": bool(settings.sarvam_keys), "sarvam_clone": bool(settings.sarvam_keys),
-        "voicebox": settings.voicebox_enabled, "voicebox-whisper": settings.voicebox_enabled,
+        "voice_engine": settings.voice_engine_enabled, "voice-engine-whisper": settings.voice_engine_enabled,
         "fish": bool(settings.fish_key), "fal": bool(settings.fal_key), "elevenlabs": bool(settings.elevenlabs_key),
         "deepgram": bool(settings.deepgram_key), "higgsfield": bool(settings.higgsfield_key), "razorpay": bool(settings.razorpay_key_id),
         "resend": bool(settings.resend_key), "insightface(local)": True,
@@ -74,8 +74,8 @@ async def _probe(name: str) -> tuple[str, str]:
     if name in LOCAL_ALWAYS:
         return "ok", "built in"
     try:
-        if name in ("voicebox", "voicebox-whisper"):
-            up = await voicebox.health()
+        if name in ("voice_engine", "voice-engine-whisper"):
+            up = await voice_engine.health()
             return ("ok", "internal service healthy") if up else ("down", "not reachable on 127.0.0.1")
         if name == "insightface(local)":
             p = Path.home() / ".insightface" / "models" / "buffalo_l"

@@ -1,7 +1,7 @@
 """Text-to-speech + voice cloning, routed per language (config/languages.yaml).
 
-Engines (verified 2026-10-15, docs/PROVIDERS.md):
-  voicebox       local Voicebox service (cloned profiles; internal-only port)
+Engines:
+  voice_engine   local voice service (cloned profiles; internal-only port)
   sarvam_clone   Sarvam POST /voices/clone with our stored reference clip (≤15 s)
                  — the only verified cloning route for Bengali
   sarvam         Sarvam bulbul:v3 preset speakers (bn/hi/en-IN)
@@ -26,7 +26,7 @@ import yaml
 
 from ..config import settings
 from ..services.metering import BudgetExceeded, metered
-from . import fish, voicebox
+from . import fish, voice_engine
 from .base import ProviderError, ProviderUnavailable, client, raise_for
 
 log = logging.getLogger("missyou.tts")
@@ -38,7 +38,7 @@ LANG = {"bn": "bn-IN", "hi": "hi-IN", "en": "en-IN"}
 class Voice:
     """What the TTS layer needs to know about a voice."""
     engine: str
-    voice_id: str = ""          # voicebox profile id / preset speaker name
+    voice_id: str = ""          # engine profile id / preset speaker name
     gender: str = "f"           # f | m
     ref_audio: Path | None = None  # local reference clip for cloning engines
     ref_text: str = ""
@@ -158,8 +158,8 @@ async def _xai(text: str, lang: str, voice: str) -> bytes:
 
 
 def engine_available(engine: str) -> bool:
-    if engine == "voicebox":
-        return voicebox.is_up()
+    if engine == "voice_engine":
+        return voice_engine.is_up()
     if engine == "fish":
         return fish.available()
     if engine in ("sarvam", "sarvam_clone"):
@@ -177,8 +177,8 @@ def engine_supports(engine: str, lang: str) -> bool:
 
 
 async def _one(engine: str, text: str, lang: str, v: Voice) -> tuple[bytes, str]:
-    if engine == "voicebox":
-        return await voicebox.generate(v.voice_id, text, lang), v.voice_id
+    if engine == "voice_engine":
+        return await voice_engine.generate(v.voice_id, text, lang), v.voice_id
     if engine == "fish":
         if not v.voice_id or v.engine != "fish":
             raise ProviderError("fish", "no_voice", "no Fish voice for this profile")
@@ -200,7 +200,7 @@ async def _one(engine: str, text: str, lang: str, v: Voice) -> tuple[bytes, str]
 
 
 def _est(engine: str, chars: int) -> float:
-    return {"voicebox": 0.0, "fish": 0.00005, "sarvam": 0.0004, "sarvam_clone": 0.0004, "openai": 0.0002, "xai": 0.000015}.get(
+    return {"voice_engine": 0.0, "fish": 0.00005, "sarvam": 0.0004, "sarvam_clone": 0.0004, "openai": 0.0002, "xai": 0.000015}.get(
         engine, 0.001) * max(chars, 1) / 10
 
 
@@ -216,7 +216,7 @@ async def synthesize(text: str, language: str, voice: Voice, *, user_id: uuid.UU
         chain = [only_engine]
     else:
         chain = [voice.engine] + [e for e in chain_cfg if e != voice.engine]
-        for own in ("voicebox", "fish"):  # these profiles only exist for voices cloned there
+        for own in ("voice_engine", "fish"):  # these profiles only exist for voices cloned there
             if voice.engine != own and own in chain:
                 chain.remove(own)
     errors: list[str] = []

@@ -6,7 +6,7 @@ missyou.env
 # --- data & media ---
 Codes/storage/
 Codes/web/e2e-shots/
-# --- vendored Voicebox (MIT, cloned separately; ~8 GB with models) ---
+# --- vendor ---
 Codes/vendor/*
 !Codes/vendor/voicebox_run.sh
 !Codes/vendor/voicebox_stop.sh

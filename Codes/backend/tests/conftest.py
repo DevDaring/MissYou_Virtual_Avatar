@@ -19,7 +19,7 @@ os.environ["MISSYOU_MOCK_PROVIDERS"] = "1"
 os.environ["MISSYOU_REDIS_URL"] = "redis://127.0.0.1:6379/9"
 os.environ["MISSYOU_STORAGE_DIR"] = str(Path("/tmp") / "missyou-test-storage")
 os.environ["MISSYOU_DOCS_DIR"] = str(Path("/tmp"))
-os.environ["VOICEBOX_ENABLED"] = "false"
+os.environ["VOICE_ENGINE_ENABLED"] = "false"
 os.environ["MISSYOU_ENV"] = "test"
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 

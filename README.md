@@ -8,12 +8,6 @@ A gentle, safety-first web app (installable PWA) for a short, clearly-labelled A
 
 Built for **[Build With AI: Basics](https://learn-ai-basics.devpost.com/)** (Devpost). This is **new code**: the project was started from an empty folder on **15 October 2026**, inside the submission period, and everything in this repository was written for it, with Claude Code as the AI coding assistant.
 
-Pre-existing / third-party work used (not authored here):
-- [jamiepine/voicebox](https://github.com/jamiepine/voicebox) (MIT) — run unmodified as a separate local voice service; **not included** in this repo (see `Codes/vendor/voicebox_run.sh`).
-- Open-source libraries listed in `Codes/backend/requirements.txt` and `Codes/web/package.json`.
-- Hosted AI APIs: OpenAI, Sarvam AI, xAI, Fish Audio, fal.ai (see `Codes/docs/PROVIDERS.md`).
-- The demo persona ("Ma") and the sample family in `Codes/config/sample_kit/` are fictional and AI-generated — no real people.
-
 ## Repository layout
 All source lives in [`Codes/`](Codes/): `backend/` (FastAPI), `web/` (React PWA), `config/`, `prompts/`, `docs/`, `deploy/`, `scripts/`.
 
@@ -43,7 +37,7 @@ cd Codes/web && MIC_WAV=speech.wav node e2e/journey.mjs ./e2e-shots # full new-u
 ```
 
 ## Map (inside `Codes/`)
-- `backend/` — FastAPI, SQLAlchemy async, Alembic, arq workers; `app/providers/` (LLM, STT, TTS/voice cloning, Voicebox, xAI, registry), `app/services/` (metering & budgets, safety, persona, faces, pipelines, calls, privacy)
+- `backend/` — FastAPI, SQLAlchemy async, Alembic, arq workers; `app/providers/` (LLM, STT, TTS/voice cloning, xAI, registry), `app/services/` (metering & budgets, safety, persona, faces, pipelines, calls, privacy)
 - `web/` — React + TS + Vite + Tailwind + React Query + Zustand PWA (`src/pages/Call.tsx` is the call screen)
 - `config/` — pricing, places, language routing, preset voices, helplines · `prompts/` — versioned prompts
 - `docs/` — PLAN, DECISIONS, PROVIDERS, PROVIDER_REPORT, COMPLIANCE, PRICING_NOTES, DEPLOY, CHANGELOG, FAQ

@@ -1,7 +1,5 @@
 """Speech-to-text chain: Sarvam saaras:v4 (Indic; sync endpoint ≤ 30 s,
-~1.4 s) → OpenAI gpt-4o-mini-transcribe → Voicebox Whisper (local CPU, slower).
-
-Verified 2026-10-15 (docs/PROVIDERS.md)."""
+~1.4 s) → OpenAI gpt-4o-mini-transcribe → local Whisper (CPU, slower)."""
 from __future__ import annotations
 
 import itertools
@@ -75,9 +73,9 @@ async def transcribe(wav: Path, *, duration_s: float, language: str | None = Non
         chain.append(("sarvam", settings.sarvam_stt_model))
     if settings.openai.available:
         chain.append(("openai", "gpt-4o-mini-transcribe"))
-    from . import voicebox
-    if voicebox.is_up():
-        chain.append(("voicebox", "whisper-small"))
+    from . import voice_engine
+    if voice_engine.is_up():
+        chain.append(("voice_engine", "whisper-small"))
     from ..services.flags import provider_primary
     pinned = await provider_primary("stt")
     if pinned:
@@ -90,8 +88,8 @@ async def transcribe(wav: Path, *, duration_s: float, language: str | None = Non
             async with metered(provider=name, capability="stt", model=model, est_usd=0.001, user_id=user_id,
                                call_id=call_id, feature=feature, unit_type="minutes",
                                units=duration_s / 60) as m:
-                if name == "voicebox":
-                    res = SttResult(await voicebox.transcribe(wav.read_bytes()), (language or "en")[:2], "voicebox")
+                if name == "voice_engine":
+                    res = SttResult(await voice_engine.transcribe(wav.read_bytes()), (language or "en")[:2], "voice_engine")
                 else:
                     res = await (_sarvam(wav, language) if name == "sarvam" else _openai(wav, language))
                 m.units = duration_s / 60

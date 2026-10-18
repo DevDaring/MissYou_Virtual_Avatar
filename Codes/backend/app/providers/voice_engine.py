@@ -1,7 +1,6 @@
-"""Voicebox internal voice service (jamiepine/voicebox v0.6.0, MIT) — adapter.
+"""Local voice engine adapter — voice cloning, TTS generation, and Whisper STT.
 
 Runs headless on CPU at 127.0.0.1:17493 (loopback only; never exposed).
-Verified against the running service on 2026-10-15 (docs/PROVIDERS.md):
 
   POST /profiles                 {name, language, voice_type:"cloned", default_engine}
   POST /profiles/{id}/samples    multipart: file (2–30 s, RMS ≥ 0.01), reference_text (1–1000 chars)
@@ -11,15 +10,14 @@ Verified against the running service on 2026-10-15 (docs/PROVIDERS.md):
   DELETE /profiles/{id}
   POST /transcribe               multipart file → {text}
 
-Engines (licences checked per model): luxtts (Apache-2.0, English, ~3 s per
-sentence on this CPU) and chatterbox multilingual (MIT, en+hi, ~20–27 s per
-sentence — too slow for live turns, fine for letters and previews). OmniVoice
-(CC-BY-NC) and others are not used. Bengali is not supported by Voicebox.
+Engines: luxtts (English, ~3 s per sentence on this CPU) and chatterbox
+multilingual (en+hi, ~20–27 s per sentence — too slow for live turns, fine for
+letters and previews). Bengali is handled by Sarvam instead.
 
-We use the queued /generate endpoint (not /generate/stream) because the API
-and worker processes both call Voicebox and its inference is single-threaded.
-Our PostgreSQL is the source of truth; VoiceProfile.provider_voice_id holds the
-Voicebox profile id and all access control is enforced on our side.
+Uses the queued /generate endpoint (not /generate/stream) because the API
+and worker processes both call the engine and its inference is single-threaded.
+PostgreSQL is the source of truth; VoiceProfile.provider_voice_id holds the
+engine profile id and all access control is enforced on our side.
 """
 from __future__ import annotations
 
@@ -30,14 +28,14 @@ import time
 from ..config import settings
 from .base import ProviderError, client, raise_for
 
-log = logging.getLogger("missyou.voicebox")
+log = logging.getLogger("missyou.voice_engine")
 _state = {"up": False, "checked": 0.0}
 ENGINE_FOR = {"en": "luxtts", "hi": "chatterbox"}
 LANGS = {"en", "hi"}
 
 
 def is_up() -> bool:
-    return settings.voicebox_enabled and bool(_state["up"])
+    return settings.voice_engine_enabled and bool(_state["up"])
 
 
 def engine_for(language: str) -> str:
@@ -45,12 +43,12 @@ def engine_for(language: str) -> str:
 
 
 async def health() -> bool:
-    if not settings.voicebox_enabled:
+    if not settings.voice_engine_enabled:
         _state["up"] = False
         return False
     try:
         async with client(4) as c:
-            r = await c.get(f"{settings.voicebox_url}/health")
+            r = await c.get(f"{settings.voice_engine_url}/health")
         _state["up"] = r.status_code == 200 and r.json().get("status") == "healthy"
     except Exception:  # noqa: BLE001
         _state["up"] = False
@@ -61,32 +59,32 @@ async def health() -> bool:
 async def create_profile(name: str, language: str, samples: list[tuple[bytes, str]]) -> str:
     lang = language[:2]
     if lang not in LANGS:
-        raise ProviderError("voicebox", "unsupported", f"Voicebox does not support '{language}'")
+        raise ProviderError("voice_engine", "unsupported", f"Voice engine does not support '{language}'")
     async with client(60) as c:
-        r = await c.post(f"{settings.voicebox_url}/profiles", json={
+        r = await c.post(f"{settings.voice_engine_url}/profiles", json={
             "name": name[:100], "language": lang, "voice_type": "cloned", "default_engine": engine_for(lang),
             "description": "Miss You cloned voice (access controlled by Miss You)"})
-        raise_for("voicebox", r)
+        raise_for("voice_engine", r)
         pid = r.json()["id"]
         added = 0
         for audio, text in samples:
-            r = await c.post(f"{settings.voicebox_url}/profiles/{pid}/samples",
+            r = await c.post(f"{settings.voice_engine_url}/profiles/{pid}/samples",
                              files={"file": ("sample.wav", audio, "audio/wav")},
                              data={"reference_text": (text or "…").strip()[:1000] or "…"})
             if r.status_code < 300:
                 added += 1
             else:
-                log.info("voicebox rejected a sample: %s", r.text[:160])
+                log.info("voice_engine rejected a sample: %s", r.text[:160])
         if not added:
-            await c.delete(f"{settings.voicebox_url}/profiles/{pid}")
-            raise ProviderError("voicebox", "no_samples", "no usable sample (need 2–30 s of clear speech)")
+            await c.delete(f"{settings.voice_engine_url}/profiles/{pid}")
+            raise ProviderError("voice_engine", "no_samples", "no usable sample (need 2–30 s of clear speech)")
     return str(pid)
 
 
 async def delete_profile(profile_id: str) -> bool:
     try:
         async with client(15) as c:
-            r = await c.delete(f"{settings.voicebox_url}/profiles/{profile_id}")
+            r = await c.delete(f"{settings.voice_engine_url}/profiles/{profile_id}")
         return r.status_code in (200, 204, 404)
     except Exception:  # noqa: BLE001
         return False
@@ -95,27 +93,27 @@ async def delete_profile(profile_id: str) -> bool:
 async def generate(profile_id: str, text: str, language: str, max_wait: float = 120.0) -> bytes:
     lang = language[:2]
     if lang not in LANGS:
-        raise ProviderError("voicebox", "unsupported", f"Voicebox does not support '{language}'")
+        raise ProviderError("voice_engine", "unsupported", f"Voice engine does not support '{language}'")
     async with client(30) as c:
-        r = await c.post(f"{settings.voicebox_url}/generate", json={
+        r = await c.post(f"{settings.voice_engine_url}/generate", json={
             "profile_id": profile_id, "text": text[:2000], "language": lang, "engine": engine_for(lang)})
-        raise_for("voicebox", r)
+        raise_for("voice_engine", r)
         gid = r.json()["id"]
         t0 = time.monotonic()
         while time.monotonic() - t0 < max_wait:
             await asyncio.sleep(0.35)
-            h = await c.get(f"{settings.voicebox_url}/history/{gid}")
+            h = await c.get(f"{settings.voice_engine_url}/history/{gid}")
             if h.status_code != 200:
                 continue
             st = h.json().get("status")
             if st == "completed":
-                a = await c.get(f"{settings.voicebox_url}/audio/{gid}")
-                raise_for("voicebox", a)
+                a = await c.get(f"{settings.voice_engine_url}/audio/{gid}")
+                raise_for("voice_engine", a)
                 return await _to_mp3(a.content)
             if st == "failed":
-                raise ProviderError("voicebox", "failed", str(h.json().get("error"))[:200])
-        await c.post(f"{settings.voicebox_url}/generate/{gid}/cancel")
-    raise ProviderError("voicebox", "timeout", "generation took too long")
+                raise ProviderError("voice_engine", "failed", str(h.json().get("error"))[:200])
+        await c.post(f"{settings.voice_engine_url}/generate/{gid}/cancel")
+    raise ProviderError("voice_engine", "timeout", "generation took too long")
 
 
 async def _to_mp3(wav: bytes) -> bytes:
@@ -128,8 +126,8 @@ async def _to_mp3(wav: bytes) -> bytes:
 
 async def transcribe(wav_bytes: bytes) -> str:
     async with client(60) as c:
-        r = await c.post(f"{settings.voicebox_url}/transcribe", files={"file": ("a.wav", wav_bytes, "audio/wav")})
+        r = await c.post(f"{settings.voice_engine_url}/transcribe", files={"file": ("a.wav", wav_bytes, "audio/wav")})
     if r.status_code == 202:
-        raise ProviderError("voicebox", "loading", "whisper model is loading")
-    raise_for("voicebox", r)
+        raise ProviderError("voice_engine", "loading", "whisper model is loading")
+    raise_for("voice_engine", r)
     return str(r.json().get("text") or "").strip()

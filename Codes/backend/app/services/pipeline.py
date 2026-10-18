@@ -16,7 +16,7 @@ from ..config import settings
 from ..db import SessionLocal
 from ..models import (Call, EmailOutbox, MemoryBoxItem, FaceCluster, FaceDetection, Letter, MediaAsset, Person, Scene, SpeakerClip, User,
                       VoiceProfile, utcnow)
-from ..providers import fish, lipsync, llm, stt, tts, voicebox, xai_media
+from ..providers import fish, lipsync, llm, stt, tts, voice_engine, xai_media
 from ..providers.base import ProviderUnavailable
 from ..storage import storage
 from . import av, faces, ingest, jobs
@@ -279,7 +279,7 @@ async def build_voice(job_id: str) -> None:
             ref_asset = await save_asset(db, owner_id=person.owner_id, person_id=pid, kind="voice_ref",
                                          mime="audio/wav", path=ref)
             lang = person.call_language or "en"
-            chain = tts.routing().get("clone_chain", {}).get(lang, ["voicebox", "sarvam_clone"])
+            chain = tts.routing().get("clone_chain", {}).get(lang, ["voice_engine", "sarvam_clone"])
             if engine_req:
                 chain = [engine_req]
             gender = "m" if (person.gender or "").lower().startswith("m") else "f"
@@ -296,13 +296,13 @@ async def build_voice(job_id: str) -> None:
                     except Exception as e:  # noqa: BLE001
                         log.warning("fish voice failed: %s", str(e)[:160])
                         continue
-                if eng == "voicebox":
+                if eng == "voice_engine":
                     try:
-                        voice_id = await voicebox.create_profile(f"missyou-{pid.hex[:12]}", lang, samples[:4])
-                        chosen = "voicebox"
+                        voice_id = await voice_engine.create_profile(f"missyou-{pid.hex[:12]}", lang, samples[:4])
+                        chosen = "voice_engine"
                         break
                     except Exception as e:  # noqa: BLE001
-                        log.warning("voicebox profile failed: %s", str(e)[:160])
+                        log.warning("voice_engine profile failed: %s", str(e)[:160])
                         continue
                 chosen = eng
                 break

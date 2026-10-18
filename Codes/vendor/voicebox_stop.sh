@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop the Voicebox backend started by voicebox_run.sh.
+# Stop the voice engine backend started by voicebox_run.sh.
 set -uo pipefail
 
 VENDOR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -28,4 +28,4 @@ if kill -0 "$PID" 2>/dev/null; then
   kill -KILL -- "-$PID" 2>/dev/null || kill -KILL "$PID"
 fi
 rm -f "$PIDFILE"
-echo "Voicebox (pid $PID) stopped."
+echo "Voice engine (pid $PID) stopped."

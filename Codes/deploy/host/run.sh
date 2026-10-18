@@ -6,7 +6,7 @@ PORT="${PORT:-8170}"
 cd "$APP_DIR"
 "$APP_DIR/stop.sh" >/dev/null 2>&1 || true
 mkdir -p logs
-"$APP_DIR/voicebox.sh" start >> logs/voicebox.log 2>&1 || echo "voicebox unavailable; app degrades to hosted voices" >> logs/api.log
+"$APP_DIR/voicebox.sh" start >> logs/voice_engine.log 2>&1 || echo "voice engine unavailable; app degrades to hosted voices" >> logs/api.log
 export MISSYOU_ROOT="$APP_DIR" PYTHONPATH="$APP_DIR/backend" OMP_NUM_THREADS=4
 cd "$APP_DIR/backend"
 setsid .venv/bin/alembic upgrade head >> "$APP_DIR/logs/api.log" 2>&1 < /dev/null

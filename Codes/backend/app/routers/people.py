@@ -724,7 +724,7 @@ async def confirm_clips(pid: uuid.UUID, body: ConfirmIn, user: CurrentUser, db: 
 
 
 class BuildVoiceIn(BaseModel):
-    engine: str | None = Field(default=None, pattern="^(fish|voicebox|sarvam_clone)$")
+    engine: str | None = Field(default=None, pattern="^(fish|voice_engine|sarvam_clone)$")
 
 
 @router.post("/people/{pid}/voice/build")
@@ -749,7 +749,7 @@ async def voices(pid: uuid.UUID, user: CurrentUser, db: DB) -> dict:
     rows = (await db.execute(select(VoiceProfile).where(VoiceProfile.person_id == pid)
                              .order_by(VoiceProfile.created_at.desc()))).scalars().all()
     engines = [{"engine": e, "available": tts.engine_available(e),
-                "supports_language": tts.engine_supports(e, p.call_language)} for e in ("fish", "voicebox", "sarvam_clone")]
+                "supports_language": tts.engine_supports(e, p.call_language)} for e in ("fish", "voice_engine", "sarvam_clone")]
     return {"voices": [voice_out(v) for v in rows], "selected": str(p.voice_profile_id) if p.voice_profile_id else None,
             "clone_engines": engines}
 

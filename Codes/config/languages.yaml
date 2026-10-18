@@ -1,5 +1,5 @@
-# Language routing (brief 3.7). Verified 2026-10-15 (docs/PROVIDERS.md).
-# Voicebox lists no Bengali, so Bengali cloning routes to Sarvam /voices/clone.
+# Language routing (brief 3.7).
+# Local engine has no Bengali, so Bengali cloning routes to Sarvam /voices/clone.
 ui_languages:
   - {code: en, label: English}
   - {code: bn, label: বাংলা}
@@ -11,8 +11,8 @@ stt_chain:          # informational: Sarvam saaras:v4 (≤30 s sync) → OpenAI 
   hi: [sarvam, openai]
 
 clone_chain:        # engines tried, in order, when building a cloned voice
-  en: [fish, voicebox, sarvam_clone]   # Fish ~0.3–0.8 s/sentence; Voicebox LuxTTS ~3 s on CPU
-  hi: [fish, sarvam_clone, voicebox]   # chatterbox hi ≈ 27 s/sentence on CPU — too slow for live calls
+  en: [fish, voice_engine, sarvam_clone]   # Fish ~0.3–0.8 s/sentence; LuxTTS ~3 s on CPU
+  hi: [fish, sarvam_clone, voice_engine]   # chatterbox hi ≈ 27 s/sentence on CPU — too slow for live calls
   bn: [sarvam_clone]                   # Bengali stays on Sarvam (owner's choice; best native Bengali)
 
 tts_chain:          # fallbacks after the profile's own engine
@@ -22,7 +22,7 @@ tts_chain:          # fallbacks after the profile's own engine
 
 engines:
   fish: {languages: [en, hi]}
-  voicebox: {languages: [en, hi]}
+  voice_engine: {languages: [en, hi]}
   sarvam_clone: {languages: [en, hi, bn]}
   sarvam: {languages: [en, hi, bn]}
   openai: {languages: [en, hi, bn]}

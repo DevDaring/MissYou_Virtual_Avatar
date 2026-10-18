@@ -8,8 +8,8 @@ Ignored AWS/GCP environment variables (policy ban): **4**
 |---|---|---|---|---|
 | conversation | openai | openrouter, deepseek, gemini | linkapi, anthropic, linkapi-gemini | — |
 | safety | keywords(local) | openai-moderation, openai, openrouter, gemini | linkapi, anthropic | — |
-| stt | sarvam | openai, voicebox-whisper | — | deepgram |
-| tts_clone | voicebox | sarvam_clone | — | fish, fal, elevenlabs |
+| stt | sarvam | openai, local-whisper | — | deepgram |
+| tts_clone | local-engine | sarvam_clone | — | fish, fal, elevenlabs |
 | tts_preset | sarvam | openai, xai | — | — |
 | scene_image | xai | — | — | fal |
 | idle_video | xai | local(animated-still) | — | fal |
@@ -52,6 +52,6 @@ Ignored AWS/GCP environment variables (policy ban): **4**
 | resend | missing | no key / not configured |
 | sarvam | configured | 3 key(s); no free health endpoint (verified live 2026-10-15) |
 | sarvam_clone | configured | 3 key(s); no free health endpoint (verified live 2026-10-15) |
-| voicebox | ok | internal service healthy |
-| voicebox-whisper | ok | internal service healthy |
+| local-engine | ok | internal service healthy |
+| local-whisper | ok | internal service healthy |
 | xai | ok | models listed; using grok-4.3 |

@@ -119,7 +119,7 @@ export default function StepVoice({ person, onNext, onBack }: { person: Person; 
               </div>
             </div>
           ))}
-          {hasClips && otherEngines.length > 0 && <div className="flex flex-wrap gap-2">{otherEngines.map((e) => <button key={e.engine} className="btn-ghost min-h-[44px] text-sm" disabled={build.running} onClick={() => buildVoice(e.engine)}>Try another engine: {({ fish: 'Fish Audio', voicebox: 'Voicebox (local)', sarvam_clone: 'Sarvam' } as Record<string, string>)[e.engine] || e.engine}</button>)}</div>}
+          {hasClips && otherEngines.length > 0 && <div className="flex flex-wrap gap-2">{otherEngines.map((e) => <button key={e.engine} className="btn-ghost min-h-[44px] text-sm" disabled={build.running} onClick={() => buildVoice(e.engine)}>Try another engine: {({ fish: 'Fish Audio', voice_engine: 'Local Engine', sarvam_clone: 'Sarvam' } as Record<string, string>)[e.engine] || e.engine}</button>)}</div>}
         </section>
       )}
 

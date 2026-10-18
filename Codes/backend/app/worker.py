@@ -43,8 +43,8 @@ async def lipsync_memory(ctx: dict[str, Any], job_id: str) -> None:
 
 
 async def startup(ctx: dict[str, Any]) -> None:
-    from .providers import voicebox
-    await voicebox.health()
+    from .providers import voice_engine
+    await voice_engine.health()
 
 
 class WorkerSettings:

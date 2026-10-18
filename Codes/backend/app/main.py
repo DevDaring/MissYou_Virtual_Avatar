@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .config import settings
-from .providers import registry, voicebox
+from .providers import registry, voice_engine
 from .routers import admin, auth, calls, me, people, public
 from .security import CSRF_COOKIE, CSRF_HEADER
 from .services import flags
@@ -46,9 +46,9 @@ setup_logging()
 log = logging.getLogger("missyou.api")
 
 
-async def _voicebox_watch() -> None:
+async def _voice_engine_watch() -> None:
     while True:
-        await voicebox.health()
+        await voice_engine.health()
         await asyncio.sleep(30)
 
 
@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await ensure_demo()
     except Exception:  # noqa: BLE001
         log.exception("demo seed failed")
-    tasks = [asyncio.create_task(_voicebox_watch()), asyncio.create_task(registry.periodic(900))]
+    tasks = [asyncio.create_task(_voice_engine_watch()), asyncio.create_task(registry.periodic(900))]
     try:
         await registry.refresh(write_report=True)
     except Exception:  # noqa: BLE001
