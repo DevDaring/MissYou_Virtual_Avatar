@@ -1,0 +1,20 @@
+import { chromium } from 'playwright-core'
+import os from 'os'
+const B = 'https://missyou.koushikdeb.com'
+const b = await chromium.launch({ executablePath: `${os.homedir()}/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome` })
+const page = await (await b.newContext({ viewport: { width: 1280, height: 900 } })).newPage()
+const errs = []; page.on('pageerror', (e) => errs.push(String(e)))
+await page.goto(`${B}/login?jury=1`); await page.getByRole('button', { name: 'Sign in', exact: true }).click(); await page.waitForURL('**/home')
+await page.getByRole('link', { name: 'Open details' }).first().click(); await page.waitForURL('**/people/**')
+await page.getByRole('button', { name: '📷 Change photo' }).click(); await page.getByText('Tap to choose photos').waitFor()
+await page.keyboard.press('Escape')
+await page.getByRole('button', { name: /Edit name/ }).click()
+const name = page.getByLabel('Their name'); const orig = await name.inputValue()
+await name.fill('Anjali Sen (edit test)'); await page.getByRole('button', { name: 'Save', exact: true }).click()
+await page.getByText('Anjali Sen (edit test)').first().waitFor()
+await page.reload(); await page.getByText('Anjali Sen (edit test)').first().waitFor()
+await page.getByRole('button', { name: /Edit name/ }).click(); await page.getByLabel('Their name').fill(orig); await page.getByRole('button', { name: 'Save', exact: true }).click()
+await page.getByText(orig).first().waitFor()
+await page.screenshot({ path: process.argv[2] })
+console.log('edit ok; restored to', orig, '| errors', JSON.stringify(errs))
+await b.close()

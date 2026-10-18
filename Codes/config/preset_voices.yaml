@@ -1,0 +1,19 @@
+# Curated preset voices (brief 6.2 voice step 5). Speaker names verified
+# against the live Sarvam bulbul:v3 speaker list, xAI /v1/tts/voices and
+# OpenAI's TTS voices on 2026-10-15. Age tags are our listening estimate.
+presets:
+  - {id: sarvam-roopa, engine: sarvam, voice_id: roopa, label: "Roopa — warm, gentle", gender: f, ages: [middle, elder], languages: [bn, hi, en]}
+  - {id: sarvam-kavitha, engine: sarvam, voice_id: kavitha, label: "Kavitha — calm, mature", gender: f, ages: [middle, elder], languages: [en, hi, bn]}
+  - {id: sarvam-suhani, engine: sarvam, voice_id: suhani, label: "Suhani — soft, bright", gender: f, ages: [young, middle], languages: [bn, hi, en]}
+  - {id: sarvam-priya, engine: sarvam, voice_id: priya, label: "Priya — clear, kind", gender: f, ages: [young, middle], languages: [hi, en, bn]}
+  - {id: sarvam-ritu, engine: sarvam, voice_id: ritu, label: "Ritu — cheerful", gender: f, ages: [young], languages: [hi, en, bn]}
+  - {id: sarvam-rehan, engine: sarvam, voice_id: rehan, label: "Rehan — steady, warm", gender: m, ages: [middle, elder], languages: [bn, hi, en]}
+  - {id: sarvam-anand, engine: sarvam, voice_id: anand, label: "Anand — deep, mature", gender: m, ages: [middle, elder], languages: [hi, en, bn]}
+  - {id: sarvam-aditya, engine: sarvam, voice_id: aditya, label: "Aditya — friendly", gender: m, ages: [young, middle], languages: [en, hi, bn]}
+  - {id: sarvam-rahul, engine: sarvam, voice_id: rahul, label: "Rahul — relaxed", gender: m, ages: [young, middle], languages: [hi, en, bn]}
+  - {id: openai-coral, engine: openai, voice_id: coral, label: "Coral — soft (OpenAI)", gender: f, ages: [young, middle], languages: [en, hi, bn]}
+  - {id: openai-sage, engine: openai, voice_id: sage, label: "Sage — calm (OpenAI)", gender: f, ages: [middle, elder], languages: [en, hi, bn]}
+  - {id: openai-ash, engine: openai, voice_id: ash, label: "Ash — warm (OpenAI)", gender: m, ages: [middle], languages: [en, hi, bn]}
+  - {id: openai-onyx, engine: openai, voice_id: onyx, label: "Onyx — deep (OpenAI)", gender: m, ages: [middle, elder], languages: [en, hi, bn]}
+  - {id: xai-eve, engine: xai, voice_id: eve, label: "Eve — gentle (xAI)", gender: f, ages: [young, middle], languages: [en, hi, bn]}
+  - {id: xai-rex, engine: xai, voice_id: rex, label: "Rex — steady (xAI)", gender: m, ages: [middle], languages: [en, hi, bn]}

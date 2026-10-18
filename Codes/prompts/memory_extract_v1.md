@@ -1,0 +1,2 @@
+<!-- prompt: memory extraction v1 — turns an interview answer into memory notes. JSON only. -->
+From the user's answer about {{name}}, extract 0–3 short factual memory notes (third person, max 25 words each) useful for recreating how {{name}} talked and what they loved. Also extract favourite phrases or nicknames if present. Never invent anything not stated. Return ONLY JSON: {"notes": ["..."], "phrases": ["..."], "nicknames": ["..."]}

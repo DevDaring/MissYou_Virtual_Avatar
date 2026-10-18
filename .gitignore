@@ -1,0 +1,24 @@
+# --- secrets: never commit ---
+.env
+missyou.env
+*.env
+!.env.example
+# --- data & media ---
+Codes/storage/
+Codes/web/e2e-shots/
+# --- vendored Voicebox (MIT, cloned separately; ~8 GB with models) ---
+Codes/vendor/*
+!Codes/vendor/voicebox_run.sh
+!Codes/vendor/voicebox_stop.sh
+# --- build / env / caches ---
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.log
+*.pid
+.DS_Store

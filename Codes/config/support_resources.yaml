@@ -1,0 +1,18 @@
+# Crisis support resources, region-configurable (brief 7). Verified 2026-10-15
+# from official sources (docs/COMPLIANCE.md). Re-verify before each release.
+regions:
+  IN:
+    title: "You don't have to go through this alone"
+    intro: "If you're thinking about hurting yourself or feel unsafe, please reach a real person now. These lines are free and confidential."
+    lines:
+      - {name: "Tele-MANAS (Govt. of India)", phone: "14416", alt: "1-800-891-4416", hours: "24×7, 20+ languages", url: "https://telemanas.mohfw.gov.in"}
+      - {name: "Vandrevala Foundation", phone: "+91 9999 666 555", hours: "24×7, call or WhatsApp", url: "https://www.vandrevalafoundation.com"}
+      - {name: "AASRA", phone: "022-27546669", hours: "24×7", url: "http://www.aasra.info"}
+      - {name: "iCall (TISS)", phone: "9152987821", hours: "Mon–Sat, 8 am–9 pm", url: "https://icallhelpline.org"}
+    emergency: {name: "Emergency", phone: "112"}
+  DEFAULT:
+    title: "Please reach out to someone now"
+    intro: "If you're in danger or thinking about suicide, contact local emergency services or a crisis line in your country."
+    lines:
+      - {name: "Find a helpline (international directory)", phone: "", hours: "", url: "https://findahelpline.com"}
+    emergency: {name: "Emergency", phone: "112"}

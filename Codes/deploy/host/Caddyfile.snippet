@@ -1,0 +1,47 @@
+# >>> missyou
+# Miss You (AI recreation video call) - https://missyou.koushikdeb.com : static React PWA + /api (HTTP+WebSocket) -> FastAPI on 127.0.0.1:8170
+# DNS: NameSilo A record "missyou" -> 154.12.116.152. TLS via Caddy ACME. Deploy: Codes/scripts/deploy.sh
+missyou.koushikdeb.com {
+	encode zstd gzip
+	log {
+		output file /var/log/caddy/missyou.log {
+			roll_size 50MiB
+			roll_keep 5
+			roll_keep_for 2160h
+		}
+		format json
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Microphone (talking in calls) and camera (optional local picture-in-picture) are first-party only.
+		Permissions-Policy "camera=(self), microphone=(self), geolocation=(), payment=(), usb=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+	@immutable path /assets/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+	@sw path /sw.js /registerSW.js /manifest.webmanifest
+	header @sw Cache-Control "no-cache"
+	handle /api/* {
+		request_body {
+			max_size 12MB
+		}
+		reverse_proxy 127.0.0.1:8170 {
+			header_up X-Real-IP {remote_host}
+			flush_interval -1
+			transport http {
+				read_timeout 15m
+				write_timeout 15m
+			}
+		}
+	}
+	handle {
+		root * /home/Debz/Host/missyou/web
+		try_files {path} /index.html
+		file_server
+	}
+}
+# <<< missyou

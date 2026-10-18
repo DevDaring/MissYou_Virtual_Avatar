@@ -1,0 +1,124 @@
+# Preset places (brief 6.3). `prompt` feeds scene-still generation; `ambient`
+# names the client's procedural soundscape; `ambient_motion` feeds the idle loop.
+locations:
+  garden_lawn:
+    label: Garden lawn
+    emoji: "🌿"
+    gradient: ["#2f5d3a", "#9bc27a"]
+    ambient: birds
+    description: Soft grass, flowering shrubs, birdsong.
+    prompt: a green garden lawn with flowering hibiscus and marigold shrubs, a cane chair, trees behind
+    ambient_motion: leaves stirring in a light breeze, dappled light shifting
+  balcony_sunset:
+    label: Balcony at sunset
+    emoji: "🌇"
+    gradient: ["#f0925f", "#5b3a7a"]
+    ambient: evening
+    description: Potted plants, rooftops, a warm sky.
+    prompt: a small Kolkata apartment balcony with potted jasmine and tulsi, iron grille railing, old rooftops and a warm sunset sky behind
+    ambient_motion: jasmine leaves swaying slightly, a distant kite in the sky, soft light flicker
+  riverside_ghat:
+    label: Riverside ghat
+    emoji: "🛶"
+    gradient: ["#3a6a8f", "#e8b07a"]
+    ambient: river
+    description: Stone steps by the river, boats drifting.
+    prompt: the stone steps of a riverside ghat on the Hooghly river, wooden boats on the water, a temple spire in the distance
+    ambient_motion: gentle ripples on the river, a boat drifting slowly, birds crossing the sky
+  tea_stall:
+    label: Tea stall
+    emoji: "☕"
+    gradient: ["#7a4b2a", "#e0b080"]
+    ambient: cafe
+    description: A roadside cha stall, clay cups, chatter.
+    prompt: a roadside Indian tea stall with clay bhar cups, a kettle steaming on a stove, a wooden bench, a quiet lane
+    ambient_motion: steam rising from the kettle, a passer-by far in the background
+  park_bench:
+    label: Park bench
+    emoji: "🌳"
+    gradient: ["#3e6b4f", "#c9d9a0"]
+    ambient: birds
+    description: A quiet bench under old trees.
+    prompt: a quiet city park bench under large old banyan trees, a walking path, morning light
+    ambient_motion: leaves rustling, sunlight flickering through the canopy
+  beach:
+    label: Beach
+    emoji: "🌊"
+    gradient: ["#2d6f93", "#f3d7a1"]
+    ambient: waves
+    description: Waves, wind, open sky.
+    prompt: a calm sandy beach at Puri with gentle waves and an open sky
+    ambient_motion: waves rolling in softly, hair moving slightly in the sea breeze
+  hill_station:
+    label: Hill station
+    emoji: "⛰️"
+    gradient: ["#4a6b82", "#cfe0e8"]
+    ambient: wind
+    description: Misty hills, pine trees, cool air.
+    prompt: a misty hillside in Darjeeling with tea gardens, pine trees and distant mountains
+    ambient_motion: mist drifting slowly across the hills, pine branches moving
+  living_room:
+    label: Living room
+    emoji: "🛋️"
+    gradient: ["#6b4e3a", "#e6cba8"]
+    ambient: home
+    description: A familiar sofa, a lamp, a wall clock.
+    prompt: a warm Indian middle-class living room with a cane sofa, a framed family photo, a wall clock and a table lamp
+    ambient_motion: a curtain moving gently near a window, warm lamp light
+  rooftop:
+    label: Rooftop
+    emoji: "🏙️"
+    gradient: ["#3b3f6b", "#f2a77a"]
+    ambient: evening
+    description: Open terrace, water tank, evening sky.
+    prompt: an open city rooftop terrace with a water tank, clothes lines and potted plants, evening sky
+    ambient_motion: clothes on the line swaying, birds circling far away
+  temple_courtyard:
+    label: Temple courtyard
+    emoji: "🛕"
+    gradient: ["#8a5a2b", "#f5d38a"]
+    ambient: temple
+    description: Stone courtyard, marigolds, bells far away.
+    prompt: a peaceful stone temple courtyard with marigold garlands and a banyan tree, soft light
+    ambient_motion: marigold garlands swaying, incense smoke curling
+  cafe:
+    label: Café
+    emoji: "🍰"
+    gradient: ["#5a3b4a", "#e8b7a8"]
+    ambient: cafe
+    description: A cosy café corner by the window.
+    prompt: a cosy old café corner by a window with wooden tables and warm lamps
+    ambient_motion: people far in the background, steam from a cup
+  old_home:
+    label: Their old home
+    emoji: "🏠"
+    gradient: ["#4b3a5a", "#d9b8a0"]
+    ambient: home
+    description: Upload a photo of the place.
+    prompt: their own home, as in the uploaded photo
+    ambient_motion: subtle natural movement in the room, light shifting softly
+
+activities:
+  sitting: "They are sitting comfortably."
+  walking: "They are walking slowly, phone held out in front of them."
+  standing: "They are standing still, relaxed."
+
+times:
+  morning: "Soft morning sunlight."
+  golden_hour: "Warm golden-hour light."
+  evening: "Calm blue-hour evening light with a few warm lamps."
+  light_rain: "Overcast with gentle light rain in the background, soft diffused light."
+
+weather:
+  clear: ""
+  cloudy: "A softly clouded sky."
+  light_rain: "Light rain falling gently in the background."
+  breezy: "A light breeze."
+
+outfits:
+  - saree
+  - salwar kameez
+  - kurta
+  - shirt and trousers
+  - sweater
+  - dhoti and kurta

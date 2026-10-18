@@ -1,0 +1,113 @@
+/* Landing-only motion. Transforms and opacity only, so it stays on the compositor. */
+
+.landing-sky {
+  background:
+    radial-gradient(120% 60% at 50% 105%, rgba(240, 146, 95, 0.32) 0%, rgba(241, 155, 176, 0.14) 32%, transparent 62%),
+    linear-gradient(180deg, #0b0818 0%, #110d24 34%, #1b1538 64%, #2c2252 86%, #3a2a58 100%);
+}
+
+.aurora {
+  position: absolute;
+  border-radius: 9999px;
+  will-change: transform;
+  pointer-events: none;
+}
+.aurora-a {
+  width: 70vmax;
+  height: 42vmax;
+  left: -18vmax;
+  top: -14vmax;
+  background: radial-gradient(closest-side, rgba(143, 122, 214, 0.32), rgba(143, 122, 214, 0) 70%);
+  animation: aurora-a 26s ease-in-out infinite alternate;
+}
+.aurora-b {
+  width: 60vmax;
+  height: 36vmax;
+  right: -20vmax;
+  top: 4vmax;
+  background: radial-gradient(closest-side, rgba(241, 155, 176, 0.2), rgba(241, 155, 176, 0) 70%);
+  animation: aurora-b 32s ease-in-out infinite alternate;
+}
+.aurora-c {
+  width: 80vmax;
+  height: 30vmax;
+  left: 10vmax;
+  bottom: -6vmax;
+  background: radial-gradient(closest-side, rgba(240, 146, 95, 0.2), rgba(240, 146, 95, 0) 70%);
+  animation: aurora-c 22s ease-in-out infinite alternate;
+}
+@keyframes aurora-a {
+  to { transform: translate3d(12vmax, 6vmax, 0) scale(1.15) rotate(8deg); }
+}
+@keyframes aurora-b {
+  to { transform: translate3d(-14vmax, 8vmax, 0) scale(1.1) rotate(-10deg); }
+}
+@keyframes aurora-c {
+  to { transform: translate3d(-8vmax, -4vmax, 0) scale(1.2); }
+}
+
+.memory-card {
+  transform: rotate(var(--rot, 0deg));
+  animation: memory-float var(--dur, 14s) ease-in-out var(--delay, 0s) infinite alternate;
+}
+@keyframes memory-float {
+  0% { transform: translate3d(0, 0, 0) rotate(var(--rot, 0deg)); }
+  50% { transform: translate3d(6px, -14px, 0) rotate(calc(var(--rot, 0deg) + 2deg)); }
+  100% { transform: translate3d(-4px, -26px, 0) rotate(calc(var(--rot, 0deg) - 1deg)); }
+}
+
+.hz-lamp {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: lamp-breathe 5s ease-in-out infinite;
+}
+.hz-diyas .hz-flame {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flame-flicker 2.6s ease-in-out infinite;
+}
+.hz-diyas g:nth-child(2) .hz-flame { animation-delay: -0.9s; }
+.hz-diyas g:nth-child(3) .hz-flame { animation-delay: -1.7s; }
+.hz-diyas {
+  animation: diya-bob 7s ease-in-out infinite alternate;
+}
+.hz-shimmer {
+  animation: shimmer 6s ease-in-out infinite alternate;
+}
+@keyframes lamp-breathe {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+@keyframes flame-flicker {
+  0%, 100% { transform: scale(1, 1); }
+  40% { transform: scale(0.92, 1.12); }
+  70% { transform: scale(1.06, 0.94); }
+}
+@keyframes diya-bob {
+  to { transform: translate(14px, 2px); }
+}
+@keyframes shimmer {
+  from { opacity: 0.08; transform: translateX(-6px); }
+  to { opacity: 0.24; transform: translateX(6px); }
+}
+
+.hero-rise {
+  animation: hero-rise 1.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora,
+  .memory-card,
+  .hz-lamp,
+  .hz-diyas,
+  .hz-diyas .hz-flame,
+  .hz-shimmer,
+  .hero-rise {
+    animation: none !important;
+  }
+}

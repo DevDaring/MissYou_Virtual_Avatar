@@ -1,0 +1,40 @@
+# Decisions (one line each: decision — reason)
+
+- PostgreSQL 16 + pgvector already on the host — owner asked for pgsql instead of SQLite; Voicebox keeps its own SQLite only as an internal cache keyed by our ids.
+- Native processes (venv + uvicorn + arq) behind the existing Caddy, not Docker, on this VPS — matches the other apps on the box and reuses the system Postgres/Redis; docker-compose files are provided for a fresh VPS (deploy/), not used here.
+- arq (asyncio, Redis) over Dramatiq — the API is async end-to-end; arq jobs are plain async functions sharing the same code; supports abort and per-queue workers.
+- Two queues, `missyou:cpu` and `missyou:gpu` — "gpu" jobs (scene generation, letters, restoration) can be served by a remote GPU worker pulling the same Redis over a TLS tunnel.
+- OpenAI gpt-4.1-mini is the effective primary LLM — LinkAPI (first in the brief's chain) failed the TLS handshake from this host on 2026-10-15; it stays first in the chain and is skipped automatically while its health check is down.
+- Safety = keywords ∥ OpenAI moderation ∥ LLM classifier — verified that moderation alone misses indirect phrasing ("I don't want to live without him" = 0.009).
+- Safety check runs in parallel with the persona LLM and the reply is discarded if unsafe — saves ~1.5 s per turn without ever speaking an unchecked reply.
+- STT: Sarvam saaras:v4 → OpenAI gpt-4o-mini-transcribe → Voicebox Whisper — Sarvam is fastest and best for Bengali/Hindi; utterances capped at 28 s to stay within Sarvam's 30 s sync limit.
+- Voice cloning: Voicebox LuxTTS for English (≈3 s/sentence on CPU), Sarvam /voices/clone for Bengali and Hindi — Voicebox has no Bengali; Chatterbox Hindi takes ≈27 s/sentence on this CPU, too slow for live turns.
+- Sarvam cloning uses `ref_audio` per request (no saved voice at Sarvam) — avoids the per-account voice cap and leaves nothing to delete at the provider.
+- Voicebox called through its queued /generate API, not /generate/stream — two of our processes call it and its inference is single-threaded.
+- OmniVoice disabled — CC-BY-NC weights forbid commercial use; TADA not used (Llama licence conditions, no Hindi, too heavy for CPU).
+- Diarization = silence segmentation + MFCC/pitch speaker vectors + agglomerative clustering — no GPU on the VPS; the user confirms every clip anyway ("we never auto-match voice to face"); pyannote/Demucs are the GPU-worker upgrade.
+- Vocal isolation = ffmpeg band-pass + FFT denoise — Demucs on CPU is too slow for the setup flow; listed as GPU-worker capability.
+- Faces = InsightFace buffalo_l on CPU — detector, ArcFace embeddings and an age head in one pass; cosine agglomerative clustering (threshold 0.6).
+- Minor refusal uses two independent signals — InsightFace median age < 16 OR the vision LLM's apparent age (< 16, or < 18 and "looks under 18"); found in testing that InsightFace estimated a 7-year-old at 26, so it can't be the only gate.
+- Public-figure check = local reference-embedding set (config/public_figures/*.npy, empty by default) + a combined vision-LLM check, plus a focused second opinion when it says "not famous" (the combined prompt missed a famous historical figure once in testing); refuse at confidence ≥ 0.75. Verified: a public-domain Gandhi portrait and a fictional child are both refused.
+- Scene still via xAI `grok-imagine-image-2.0` multi-image edit with up to 3 anchor crops — verified identity preservation; ArcFace similarity to the cluster centroid must be ≥ 0.32 (configurable) or we retry (≤ 2 retries), else fall back to the user's own photo, honestly noted.
+- Idle/listening/talking loops via xAI `grok-imagine-video-1.5-lite` image-to-video, audio disabled — cheapest verified model; clips are cross-faded into seamless loops; animated-still fallback via ffmpeg when unavailable.
+- Lip-sync: no verified provider configured (no FAL_KEY, no GPU worker) — client plays the generated *talking* loop gated by the reply's loudness envelope and the UI says lip-sync is approximate; `providers/lipsync.py` is the integration point.
+- Watermark: stills stored as PNG with a keyed LSB watermark + PNG/EXIF "AI-generated" labels; videos carry container metadata; exports burn a visible label — LSB marks don't survive JPEG.
+- Media encrypted at rest with AES-256-GCM in 1 MiB chunks bound to object key + index — allows byte-range video seeking without decrypting whole files; tamper-evident.
+- Signed media URLs expire (15 min, bucketed to 5 min so the PWA can cache call clips).
+- Transcripts are stored only when the user opts in; live history lives in Redis for the call (TTL 6 h).
+- Jury account `TestUser` is an admin with 2FA waived (`MISSYOU_DEMO_ADMIN_2FA_WAIVED`) — the jury can't enrol an authenticator; every other admin needs TOTP. Hackathon-only exception.
+- Demo loved one "Ma" is a fictional person with an AI-generated portrait — no real person's likeness is used for the public demo.
+- Email OTP implemented with Resend as the provider interface; no email key is present, so codes go to the admin-visible outbox and, outside production, are shown on screen — OTP sign-in is disabled in production until RESEND_API_KEY is set.
+- Google OAuth not configured (no client id) — endpoint returns 501; password + email-code sign-in available.
+- Razorpay: payment interface and ledger implemented; order creation returns "not configured" until keys exist — admins grant credits manually meanwhile.
+- Credits charged up front for scenes/voices/letters and refunded automatically on failure; call minutes charged at the end.
+- Uvicorn runs 2 workers — call state is per-WebSocket plus Redis/DB, so workers are independent.
+- (2026-10-18) Bengali speech always goes to Sarvam (owner's instruction): Bengali-speaking personas are voiced with bulbul:v4-flash conversational Bengali voices (`roopa_bn_conversational` / `arnab_bn_conversation`, v3 fallback), or Sarvam cloning when a clone exists — verified that romanised Bengali read by an en-IN voice was mispronounced, while Bengali-script text round-trips word-perfect.
+- (2026-10-18) The persona prompt writes Bengali/Hindi in native script; TTS language follows the script of the whole reply, so one voice is kept per reply (no mid-sentence voice switching).
+- (2026-10-18) Fish Audio s2.1-pro is the first clone engine for English and Hindi (saved private voice, ~0.3–0.8 s per sentence); Voicebox and Sarvam clone remain fallbacks.
+- (2026-10-18) fal sync-lipsync v2 is used for async content only (letters, memory-box keepsakes): measured ~80 s for a 4 s reply, far over the live-call budget; live lip-sync stays off (`MISSYOU_LIPSYNC_LIVE=false`).
+- (2026-10-18) Letter replies shortened to 20–30 s so lip-synced letters stay affordable (~$1–1.5 each at $3/min).
+- (2026-10-18) Higgsfield (Wan 2.7 image-to-video with audio) registered as a talking-video fallback but not wired: ~$0.085/s and ~90 s per 3 s clip vs fal on our existing scene loops.
+- (2026-10-18) Jury/admin login is TestUser/TestUser11 (labelled "Jury & admin access"; Admin link added to the mobile header).
